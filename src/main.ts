@@ -5,9 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
-    logger: new ConsoleLogger({}),
-  });
+  const app = await NestFactory.create(AppModule);
 
   const config = new DocumentBuilder()
     .setTitle('Car service center')
@@ -32,7 +30,10 @@ async function bootstrap() {
 
   const PORT = process.env.PORT ?? 3000;
   await app.listen(PORT, () => {
-    console.log(`Сервер стартовал по адресу http://localhost:${PORT}/api`);
+    Logger.log(
+      `Сервер стартовал по адресу http://localhost:${PORT}/api`,
+      'Main',
+    );
   });
 }
 bootstrap();
