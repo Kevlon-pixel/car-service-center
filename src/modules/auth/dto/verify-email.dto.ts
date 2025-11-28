@@ -4,8 +4,8 @@ import { IsString } from 'class-validator';
 export class VerifyEmailDto {
   @ApiProperty({
     example: 'uuid-token-from-email',
-    description: 'Почтовый токен',
+    description: 'Email verification token from the link',
   })
-  @IsString({ message: 'Токен должен передаваться в виде строки' })
+  @IsString({ message: 'emailToken must be a string' })
   emailToken: string;
 }

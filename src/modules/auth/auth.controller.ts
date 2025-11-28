@@ -12,19 +12,25 @@ import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { RegisterDto } from './dto/register.dto';
 import { VerifyEmailDto } from './dto/verify-email.dto';
 import { LoginDto } from './dto/login.dto';
-import { JwtAuthGuard } from './jwt/guards/jwt-auth.guard';
+import { ConfigService } from '@nestjs/config';
+import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
+import { Request } from 'express';
+import { isDev } from 'src/shared/utils/is-dev.util';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly config: ConfigService,
+  ) {}
 
-  @ApiOperation({ summary: 'Регистрация пользователя' })
+  @ApiOperation({ summary: 'Register new user and send verification email' })
   @Post('register')
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
-  @ApiOperation({ summary: 'Подтверждение email' })
+  @ApiOperation({ summary: 'Confirm email by verification token' })
   @Post('verify')
   async verify(@Res({ passthrough: true }) res, @Body() dto: VerifyEmailDto) {
     const { accessToken, refreshToken, expiresAt } =
@@ -32,13 +38,14 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'Strict',
+      secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
     });
     return { accessToken };
   }
 
-  @ApiOperation({ summary: 'Аутентификация пользователя' })
+  @ApiOperation({ summary: 'Login user' })
   @Post('login')
   async login(@Res({ passthrough: true }) res, @Body() dto: LoginDto) {
     const { accessToken, refreshToken, expiresAt } =
@@ -46,6 +53,7 @@ export class AuthController {
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'Strict',
+      secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
     });
@@ -54,19 +62,20 @@ export class AuthController {
 
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
-  @ApiOperation({ summary: 'Выход пользователя' })
+  @ApiOperation({ summary: 'Logout user' })
   @Post('logout')
   async logout(@Res({ passthrough: true }) res) {
     res.clearCookie('refreshToken', {
       httpOnly: true,
       sameSite: 'Strict',
+      secure: !isDev(this.config),
       path: '/',
     });
 
-    return { message: 'Пользователь успешно разлогинился' };
+    return { message: 'Logged out successfully' };
   }
 
-  @ApiOperation({ summary: 'Обновление refresh токена' })
+  @ApiOperation({ summary: 'Refresh access token by refresh cookie' })
   @Post('refresh')
   async refresh(
     @Req() req: Request & { cookies: { refreshToken?: string } },
@@ -74,13 +83,14 @@ export class AuthController {
   ) {
     const oldToken = req.cookies.refreshToken;
     if (!oldToken) {
-      throw new UnauthorizedException('Нет refresh токена в куки');
+      throw new UnauthorizedException('No refresh token provided');
     }
     const { accessToken, refreshToken, expiresAt } =
       await this.authService.refresh(oldToken);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       sameSite: 'Strict',
+      secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
     });

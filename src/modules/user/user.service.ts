@@ -8,43 +8,38 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDto } from './dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
+import { Prisma, SystemRole, User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update.dto';
-import { Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
-  private SALT_ROUNDS: number;
+  private readonly SALT_ROUNDS: number;
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {
-    this.SALT_ROUNDS = Number(config.getOrThrow<number>('SALT_ROUNDS'));
+    this.SALT_ROUNDS = Number(this.config.getOrThrow<number>('SALT_ROUNDS'));
   }
 
-  /* Операции над пользователями */
   async createUser(dto: CreateUserDto): Promise<Omit<User, 'passwordHash'>> {
     try {
-      const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
-
-      const user = await this.prisma.user.findUnique({
-        where: {
-          email: dto.email,
-        },
+      const existing = await this.prisma.user.findUnique({
+        where: { email: dto.email },
       });
-      if (user) {
-        throw new BadRequestException(
-          'Пользователь с таким email уже существует',
-        );
+      if (existing) {
+        throw new ConflictException('User with this email already exists');
       }
 
+      const hashedPassword = await bcrypt.hash(dto.password, this.SALT_ROUNDS);
       const newUser = await this.prisma.user.create({
         data: {
           email: dto.email,
           passwordHash: hashedPassword,
-          role: dto.role,
+          role: dto.role ?? SystemRole.USER,
           name: dto.name,
           surname: dto.surname,
         },
@@ -53,21 +48,13 @@ export class UserService {
       const { passwordHash, ...userWithoutPassword } = newUser;
       return userWithoutPassword;
     } catch (err) {
-      if (
-        err instanceof Prisma.PrismaClientKnownRequestError &&
-        err.code === 'P2002'
-      ) {
-        throw new ConflictException(
-          'Пользователь с таким email уже существует',
-        );
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new ConflictException('User with this email already exists');
       }
-
       if (err instanceof HttpException) {
         throw err;
       }
-      throw new InternalServerErrorException(
-        'Ошибка сервера при создании пользователя',
-      );
+      throw new InternalServerErrorException('Failed to create user');
     }
   }
 
@@ -80,36 +67,29 @@ export class UserService {
     try {
       if (dto.email) {
         const user = await this.prisma.user.findUnique({
-          where: {
-            email: dto.email,
-          },
+          where: { email: dto.email },
         });
-
         if (user && user.id !== userId) {
-          throw new ConflictException(
-            'Пользователь с таким email уже существует',
-          );
+          throw new ConflictException('User with this email already exists');
         }
-
         data.email = dto.email;
       }
 
       if (dto.newPassword) {
         if (!dto.currentPassword) {
-          throw new BadRequestException('Нужен старый пароль');
+          throw new BadRequestException('Current password is required');
         }
 
         const user = await this.prisma.user.findUnique({
-          where: {
-            id: userId,
-          },
+          where: { id: userId },
         });
         if (!user) {
-          throw new BadRequestException('Пользователь не найден');
+          throw new BadRequestException('User not found');
         }
+
         const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
         if (!ok) {
-          throw new UnauthorizedException('Пароли не совпадают');
+          throw new UnauthorizedException('Current password is incorrect');
         }
 
         data.passwordHash = await bcrypt.hash(
@@ -126,34 +106,30 @@ export class UserService {
         data.surname = dto.surname;
       }
 
-      const { passwordHash, ...userWithoutPassword } =
-        await this.prisma.user.update({
-          where: { id: userId },
-          data,
-        });
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data,
+      });
+      const { passwordHash, ...userWithoutPassword } = updatedUser;
       return userWithoutPassword;
     } catch (err) {
       if (err instanceof HttpException) {
         throw err;
       }
-      throw new InternalServerErrorException(
-        'Ошибка сервера при обновлении профиля',
-      );
+      throw new InternalServerErrorException('Failed to update profile');
     }
   }
 
   async deleteUser(userId: string): Promise<void> {
     try {
       const user = await this.prisma.user.findUnique({
-        where: {
-          id: userId,
-        },
+        where: { id: userId },
       });
       if (!user) {
-        throw new NotFoundException('Пользователь не найден');
+        throw new NotFoundException('User not found');
       }
-      if (user.role === 'ADMIN') {
-        throw new BadRequestException('Нельзя удалить администратора');
+      if (user.role === SystemRole.ADMIN) {
+        throw new BadRequestException('Cannot delete admin users');
       }
 
       await this.prisma.user.delete({
@@ -163,72 +139,54 @@ export class UserService {
       if (err instanceof HttpException) {
         throw err;
       }
-      throw new InternalServerErrorException(
-        'Ошибка сервера при удалении пользователя',
-      );
+      throw new InternalServerErrorException('Failed to delete user');
     }
   }
 
-  /* Поиск пользователей */
-  async findAllUsers(): Promise<Omit<User, 'passwordHash'>[]> {
+  async findAllUsers(): Promise<
+    Array<
+      Pick<
+        User,
+        'id' | 'email' | 'role' | 'name' | 'surname' | 'isEmailVerified' | 'createdAt' | 'updatedAt'
+      >
+    >
+  > {
     try {
       return await this.prisma.user.findMany({
         select: {
           id: true,
           email: true,
-          emailVerificationToken: true,
           role: true,
           name: true,
           surname: true,
           isEmailVerified: true,
-          emailVerificationTokenExpire: true,
           createdAt: true,
           updatedAt: true,
         },
       });
     } catch (err) {
-      throw new InternalServerErrorException(
-        'Ошибка сервера при поиске всех пользователей',
-      );
+      throw new InternalServerErrorException('Failed to fetch users');
     }
   }
 
   async findUserByEmail(email: string): Promise<User | null> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          email,
-        },
+      return await this.prisma.user.findUnique({
+        where: { email },
       });
-
-      if (!user) {
-        return null;
-      }
-
-      return user;
     } catch (err) {
-      throw new InternalServerErrorException(
-        'Ошибка сервера при поиске пользователя по email',
-      );
+      throw new InternalServerErrorException('Failed to fetch user by email');
     }
   }
 
   async findUserByEmailToken(emailToken: string): Promise<User | null> {
     try {
-      const user = await this.prisma.user.findUnique({
-        where: {
-          emailVerificationToken: emailToken,
-        },
+      return await this.prisma.user.findUnique({
+        where: { emailVerificationToken: emailToken },
       });
-
-      if (!user) {
-        return null;
-      }
-
-      return user;
     } catch (err) {
       throw new InternalServerErrorException(
-        'Ошибка сервера при поиске пользователя по email токену',
+        'Failed to fetch user by email verification token',
       );
     }
   }
@@ -236,9 +194,7 @@ export class UserService {
   async findUserById(id: string): Promise<Omit<User, 'passwordHash'> | null> {
     try {
       const user = await this.prisma.user.findUnique({
-        where: {
-          id,
-        },
+        where: { id },
       });
 
       if (!user) {
@@ -248,41 +204,36 @@ export class UserService {
       const { passwordHash, ...userWithoutPassword } = user;
       return userWithoutPassword;
     } catch (err) {
-      throw new InternalServerErrorException(
-        'Ошибка сервера при поиске пользователя по id',
-      );
+      throw new InternalServerErrorException('Failed to fetch user by id');
     }
   }
 
-  /* Работа над верификацией пользовательской почты */
   async updateEmailVerifyToken(
     userId: string,
     token: string,
     tokenExpires: Date,
   ): Promise<User | null> {
     try {
-      const user = await this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id: userId },
         data: {
           emailVerificationToken: token,
           emailVerificationTokenExpire: tokenExpires,
         },
       });
-
-      return user;
     } catch (err) {
       if (err instanceof HttpException) {
         throw err;
       }
       throw new InternalServerErrorException(
-        'Не удалось обновить токен верификации почты пользователя',
+        'Failed to set email verification token',
       );
     }
   }
 
   async updateEmailVerify(userId: string): Promise<User | null> {
     try {
-      const user = await this.prisma.user.update({
+      return await this.prisma.user.update({
         where: { id: userId },
         data: {
           isEmailVerified: true,
@@ -290,12 +241,8 @@ export class UserService {
           emailVerificationTokenExpire: null,
         },
       });
-
-      return user;
     } catch (err) {
-      throw new InternalServerErrorException(
-        'Не удалось обновить верификацию почты пользователя',
-      );
+      throw new InternalServerErrorException('Failed to confirm email');
     }
   }
 }

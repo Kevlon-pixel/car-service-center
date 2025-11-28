@@ -13,6 +13,21 @@ enum SystemRole {
   ADMIN
 }
 
+enum RequestStatus {
+  NEW
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -28,4 +43,139 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  vehicles         Vehicle[]
+  serviceRequests  ServiceRequest[] @relation("ClientServiceRequests")
+  clientWorkOrders WorkOrder[]      @relation("ClientWorkOrders")
+  workerWorkOrders WorkOrder[]      @relation("WorkerWorkOrders")
+}
+
+model Vehicle {
+  id      String @id @default(uuid())
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  make         String
+  model        String
+  year         Int?
+  vin          String?
+  licensePlate String  @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequests ServiceRequest[]
+  workOrders      WorkOrder[]
+}
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  basePrice   Decimal @db.Decimal(10, 2)
+  durationMin Int?
+
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceRequests   ServiceRequest[]
+  workOrderServices WorkOrderService[]
+}
+
+model SparePart {
+  id            String  @id @default(uuid())
+  name          String
+  article       String  @unique
+  unit          String  @default("pcs")
+  price         Decimal @db.Decimal(10, 2)
+  stockQuantity Int     @default(0)
+  isActive      Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrderParts WorkOrderPart[]
+}
+
+model ServiceRequest {
+  id       String @id @default(uuid())
+  clientId String
+  client   User   @relation("ClientServiceRequests", fields: [clientId], references: [id])
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  serviceId String?
+  service   Service? @relation(fields: [serviceId], references: [id])
+
+  desiredDate DateTime?
+  comment     String?
+  status      RequestStatus @default(NEW)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  workOrder WorkOrder?
+}
+
+model WorkOrder {
+  id     String @id @default(uuid())
+  number String @unique
+
+  clientId String
+  client   User   @relation("ClientWorkOrders", fields: [clientId], references: [id])
+
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+
+  responsibleWorkerId String?
+  responsibleWorker   User?   @relation("WorkerWorkOrders", fields: [responsibleWorkerId], references: [id])
+
+  requestId String?         @unique
+  request   ServiceRequest? @relation(fields: [requestId], references: [id])
+
+  status        WorkOrderStatus @default(DRAFT)
+  plannedDate   DateTime?
+  completedDate DateTime?
+
+  totalLaborCost Decimal @default(0) @db.Decimal(10, 2)
+  totalPartsCost Decimal @default(0) @db.Decimal(10, 2)
+  totalCost      Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services WorkOrderService[]
+  parts    WorkOrderPart[]
+}
+
+model WorkOrderService {
+  id          String    @id @default(uuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+}
+
+model WorkOrderPart {
+  id          String    @id @default(uuid())
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id])
+
+  partId String
+  part   SparePart @relation(fields: [partId], references: [id])
+
+  quantity Int     @default(1)
+  price    Decimal @db.Decimal(10, 2)
+  total    Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
 }

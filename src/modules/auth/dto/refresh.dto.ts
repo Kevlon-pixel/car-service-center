@@ -4,8 +4,8 @@ import { IsString } from 'class-validator';
 export class RefreshDto {
   @ApiProperty({
     example: 'fu1h389h0...',
-    description: 'Refresh токен пользователя',
+    description: 'Refresh token',
   })
-  @IsString({ message: 'Токен должен передаваться в виде строки' })
+  @IsString({ message: 'refreshToken must be a string' })
   refreshToken: string;
 }

@@ -7,21 +7,22 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UserService } from '../user/user.service';
-import { LoginDto } from './dto/login.dto';
 import * as bcrypt from 'bcrypt';
-import { RegisterDto } from './dto/register.dto';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { randomUUID } from 'crypto';
+import { UserService } from '../user/user.service';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import { MailService } from '../mailer/mail.service';
 
 @Injectable()
 export class AuthService {
-  private JWT_SECRET: string;
-  private ACCESS_TOKEN_EXPIRES_IN: JwtSignOptions['expiresIn'];
-  private REFRESH_TOKEN_EXPIRES_IN: JwtSignOptions['expiresIn'];
-  private CLIENT_URL: string;
+  private readonly ACCESS_TOKEN_SECRET: string;
+  private readonly REFRESH_TOKEN_SECRET: string;
+  private readonly ACCESS_TOKEN_EXPIRES_IN: JwtSignOptions['expiresIn'];
+  private readonly REFRESH_TOKEN_EXPIRES_IN: JwtSignOptions['expiresIn'];
+  private readonly CLIENT_URL: string;
 
   constructor(
     private readonly config: ConfigService,
@@ -29,7 +30,10 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {
-    this.JWT_SECRET = this.config.getOrThrow<string>('JWT_SECRET');
+    this.ACCESS_TOKEN_SECRET =
+      this.config.getOrThrow<string>('JWT_ACCESS_SECRET');
+    this.REFRESH_TOKEN_SECRET =
+      this.config.getOrThrow<string>('JWT_REFRESH_SECRET');
     this.ACCESS_TOKEN_EXPIRES_IN = this.config.getOrThrow<string>(
       'ACCESS_TOKEN_EXPIRES_IN',
     ) as JwtSignOptions['expiresIn'];
@@ -46,63 +50,58 @@ export class AuthService {
       const user = await this.userService.findUserByEmail(dto.email);
       if (user) {
         if (user.isEmailVerified) {
-          throw new ConflictException('Пользователь уже зарегистрирован');
+          throw new ConflictException('User with this email already verified');
         }
 
         if (
-          user.emailVerificationTokenExpire! !== null &&
+          user.emailVerificationTokenExpire !== null &&
           user.emailVerificationTokenExpire > now
         ) {
           throw new BadRequestException(
-            'Ссылка ещё действительна, проверьте почту',
+            'Verification email already sent, please check your inbox',
           );
         }
 
         const emailToken = randomUUID();
-
-        const expires = new Date();
-        const msInHour = 60 * 60 * 1000;
-        const newExpires = new Date(expires.getTime() + msInHour);
+        const expires = new Date(Date.now() + 60 * 60 * 1000);
 
         await this.userService.updateEmailVerifyToken(
           user.id,
           emailToken,
-          newExpires,
+          expires,
         );
 
         const link = `${this.CLIENT_URL}/auth/verify?token=${emailToken}`;
-        await this.mailService.sendVerification(user.email, link, newExpires);
+        await this.mailService.sendVerification(user.email, link, expires);
 
         return {
-          message: 'Письмо с подтверждением отправлено повторно',
+          message:
+            'User already exists but not verified. New verification email sent.',
         };
       }
 
       const newUser = await this.userService.createUser(dto);
 
       const emailToken = randomUUID();
-
-      const expires = new Date();
-      const msInHour = 60 * 60 * 1000;
-      const newExpires = new Date(expires.getTime() + msInHour);
+      const expires = new Date(Date.now() + 60 * 60 * 1000);
 
       await this.userService.updateEmailVerifyToken(
         newUser.id,
         emailToken,
-        newExpires,
+        expires,
       );
 
       const link = `${this.CLIENT_URL}/auth/verify?token=${emailToken}`;
-      await this.mailService.sendVerification(newUser.email, link, newExpires);
+      await this.mailService.sendVerification(newUser.email, link, expires);
 
       return {
-        message: 'Письмо с ссылкой отправлено на почту',
+        message: 'User created. Verification email sent.',
       };
     } catch (err) {
       if (err instanceof HttpException) {
         throw err;
       }
-      throw new InternalServerErrorException('Ошибка сервера при регистрации');
+      throw new InternalServerErrorException('Failed to register user');
     }
   }
 
@@ -112,7 +111,7 @@ export class AuthService {
     try {
       const user = await this.userService.findUserByEmail(dto.email);
       if (!user) {
-        throw new UnauthorizedException('Неверная почта или пароль');
+        throw new UnauthorizedException('Invalid email or password');
       }
 
       const isPasswordValid = await bcrypt.compare(
@@ -120,11 +119,11 @@ export class AuthService {
         user.passwordHash,
       );
       if (!isPasswordValid) {
-        throw new UnauthorizedException('Неверная почта или пароль');
+        throw new UnauthorizedException('Invalid email or password');
       }
 
       if (!user.isEmailVerified) {
-        throw new UnauthorizedException('Почта пользователя не подтверждена');
+        throw new UnauthorizedException('Email is not verified');
       }
 
       const { accessToken, refreshToken, expiresAt } =
@@ -135,8 +134,7 @@ export class AuthService {
       if (err instanceof HttpException) {
         throw err;
       }
-      console.error(err);
-      throw new InternalServerErrorException('Ошибка сервера при входе');
+      throw new InternalServerErrorException('Failed to login');
     }
   }
 
@@ -145,11 +143,11 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
     try {
       const payload = this.jwtService.verify(oldToken, {
-        secret: this.JWT_SECRET,
+        secret: this.REFRESH_TOKEN_SECRET,
       });
 
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Некорректный тип токена');
+        throw new UnauthorizedException('Invalid token type');
       }
 
       const { accessToken, refreshToken, expiresAt } =
@@ -157,9 +155,10 @@ export class AuthService {
 
       return { accessToken, refreshToken, expiresAt };
     } catch (err) {
-      throw new UnauthorizedException(
-        'Некорректный или просроченный refresh токен',
-      );
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      throw new UnauthorizedException('Invalid refresh token');
     }
   }
 
@@ -168,11 +167,14 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
     const user = await this.userService.findUserByEmailToken(emailToken);
     if (!user) {
-      throw new BadRequestException('Неверная почта пользователя');
+      throw new BadRequestException('Invalid verification token');
     }
 
-    if (user.emailVerificationTokenExpire! < new Date()) {
-      throw new BadRequestException('Токен истёк');
+    if (
+      user.emailVerificationTokenExpire === null ||
+      user.emailVerificationTokenExpire < new Date()
+    ) {
+      throw new BadRequestException('Verification token has expired');
     }
 
     await this.userService.updateEmailVerify(user.id);
@@ -189,7 +191,7 @@ export class AuthService {
   ): Promise<{ accessToken: string; refreshToken: string; expiresAt: Date }> {
     const user = await this.userService.findUserById(userId);
     if (!user) {
-      throw new NotFoundException('Пользователь не найден');
+      throw new NotFoundException('User not found');
     }
 
     const accessToken = this.jwtService.sign(
@@ -199,7 +201,7 @@ export class AuthService {
         role: user.role,
       },
       {
-        secret: this.JWT_SECRET,
+        secret: this.ACCESS_TOKEN_SECRET,
         expiresIn: this.ACCESS_TOKEN_EXPIRES_IN,
       },
     );
@@ -211,14 +213,16 @@ export class AuthService {
         role: user.role,
       },
       {
-        secret: this.JWT_SECRET,
+        secret: this.REFRESH_TOKEN_SECRET,
         expiresIn: this.REFRESH_TOKEN_EXPIRES_IN,
       },
     );
 
-    const expiresAt = new Date();
-    const days = parseInt(String(this.REFRESH_TOKEN_EXPIRES_IN));
-    expiresAt.setDate(expiresAt.getDate() + days);
+    const decoded = this.jwtService.decode(refreshToken) as { exp?: number };
+    if (!decoded?.exp) {
+      throw new InternalServerErrorException('Failed to read token expiry');
+    }
+    const expiresAt = new Date(decoded.exp * 1000);
 
     return { accessToken, refreshToken, expiresAt };
   }

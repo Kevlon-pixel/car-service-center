@@ -4,33 +4,33 @@ import { IsEmail, IsString, MinLength } from 'class-validator';
 export class RegisterDto {
   @ApiProperty({
     example: 'vl0d1sla8@mail.ru',
-    description: 'Email пользователя',
+    description: 'User email',
   })
-  @IsEmail({}, { message: 'email должен быть написан верно' })
+  @IsEmail({}, { message: 'email must be valid' })
   email: string;
 
   @ApiProperty({
     example: '123123',
-    description: 'Пароль пользователя',
+    description: 'User password',
     minLength: 6,
   })
   @MinLength(6, {
-    message: 'пароль должен быть не менее 6 символов',
+    message: 'Password must be at least 6 characters',
   })
-  @IsString({ message: 'пароль должен быть строкой' })
+  @IsString({ message: 'Password must be a string' })
   password: string;
 
   @ApiProperty({
-    example: 'Иван',
-    description: 'Имя пользователя',
+    example: 'John',
+    description: 'User first name',
   })
-  @IsString({ message: 'имя должено быть строкой' })
+  @IsString({ message: 'Name must be a string' })
   name: string;
 
   @ApiProperty({
-    example: 'Иванов',
-    description: 'Фамилия пользователя',
+    example: 'Doe',
+    description: 'User last name',
   })
-  @IsString({ message: 'фамилия должена быть строкой' })
+  @IsString({ message: 'Surname must be a string' })
   surname: string;
 }

@@ -1,15 +1,24 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { ConsoleLogger, Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import { RolesGuard } from './shared/guards/roles.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
+
   const config = new DocumentBuilder()
     .setTitle('Car service center')
-    .setDescription('Документация API для сервесного центра автомобилей')
+    .setDescription('API for managing car service center workflows')
     .setVersion('0.1')
     .addBearerAuth(
       {
@@ -30,10 +39,7 @@ async function bootstrap() {
 
   const PORT = process.env.PORT ?? 3000;
   await app.listen(PORT, () => {
-    Logger.log(
-      `Сервер стартовал по адресу http://localhost:${PORT}/api`,
-      'Main',
-    );
+    Logger.log(`API is running at http://localhost:${PORT}/api`, 'Main');
   });
 }
 bootstrap();

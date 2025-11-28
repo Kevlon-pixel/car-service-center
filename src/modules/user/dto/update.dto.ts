@@ -11,53 +11,53 @@ import {
 
 export class UpdateProfileDto {
   @ApiProperty({
-    example: 'vl0d1sla8@mail.ru',
-    description: 'Email пользователя',
+    example: 'user@example.com',
+    description: 'Email of the user',
   })
   @IsOptional()
-  @IsEmail({}, { message: 'email должен быть написан верно' })
+  @IsEmail({}, { message: 'email must be valid' })
   email?: string;
 
   @ApiProperty({
-    example: '321321',
-    description: 'Новый пароль',
+    example: 'newStrongPassword',
+    description: 'New password',
     minLength: 6,
   })
   @IsOptional()
   @IsString()
-  @MinLength(6, { message: 'пароль должен быть строкой' })
+  @MinLength(6, { message: 'newPassword must be at least 6 characters' })
   newPassword?: string;
 
   @ApiProperty({
-    example: '123123',
-    description: 'Текущий пароль',
+    example: 'currentPassword123',
+    description: 'Current password for confirmation',
     minLength: 6,
   })
   @IsOptional()
   @IsString()
-  @MinLength(6, { message: 'пароль должен быть строкой' })
+  @MinLength(6, { message: 'currentPassword must be at least 6 characters' })
   currentPassword?: string;
 
   @ApiProperty({
-    example: 'Иван',
-    description: 'Имя пользователя',
+    example: 'John',
+    description: 'First name',
   })
   @IsOptional()
-  @IsString({ message: 'имя должено быть строкой' })
+  @IsString({ message: 'name must be a string' })
   name?: string;
 
   @ApiProperty({
-    example: 'Иванов',
-    description: 'Фамилия пользователя',
+    example: 'Doe',
+    description: 'Last name',
   })
   @IsOptional()
-  @IsString({ message: 'фамилия должена быть строкой' })
+  @IsString({ message: 'surname must be a string' })
   surname?: string;
 }
 
 export class UpdateUserDto extends PartialType(UpdateProfileDto) {
-  @ApiProperty({ example: 'USER', description: 'Роль пользователя' })
+  @ApiProperty({ example: 'USER', description: 'System role' })
   @IsOptional()
-  @IsEnum(SystemRole, { message: 'Роль должна передаваться как одна из enum' })
+  @IsEnum(SystemRole, { message: 'role must be a valid enum value' })
   role?: SystemRole;
 }

@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { SystemRole } from '@prisma/client';
-
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 import { RegisterDto } from 'src/modules/auth/dto/register.dto';
 
 export class CreateUserDto extends RegisterDto {
-  @ApiProperty({ example: 'USER', description: 'Роль пользователя' })
+  @ApiProperty({ example: 'USER', description: 'System role' })
   @IsOptional()
-  @IsEnum(SystemRole, { message: 'Роль должна передаваться как одна из enum' })
+  @IsEnum(SystemRole, { message: 'role must be a valid enum value' })
   role?: SystemRole;
 }
