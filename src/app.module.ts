@@ -6,6 +6,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { MailModule } from './modules/mailer/mail.module';
 import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ServiceModule } from './modules/service/service.module';
+import { SparePartModule } from './modules/spare-part/spare-part.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { ServiceModule } from './modules/service/service.module';
     MailModule,
     VehicleModule,
     ServiceModule,
+    SparePartModule,
   ],
   providers: [ConfigService],
 })

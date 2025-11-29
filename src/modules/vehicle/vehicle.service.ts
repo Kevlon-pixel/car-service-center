@@ -89,7 +89,7 @@ export class VehicleService {
       return await this.prisma.vehicle.update({
         where: { id: vehicleId },
         data: {
-          licensePlate: dto.licensePlate ?? vehicle.licensePlate,
+          licensePlate: dto.licensePlate,
         },
       });
     } catch (err) {
