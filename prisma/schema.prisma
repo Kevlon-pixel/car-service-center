@@ -58,7 +58,7 @@ model Vehicle {
   make         String
   model        String
   year         Int?
-  vin          String?
+  vin          String? @unique
   licensePlate String  @unique
 
   createdAt DateTime @default(now())

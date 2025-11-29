@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MailerModule, MailerOptions } from '@nestjs-modules/mailer';
 import { MailService } from './mail.service';
+import { isDev } from 'src/shared/utils/is-dev.util';
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { MailService } from './mail.service';
         transport: {
           host: configService.getOrThrow<string>('EMAIL_HOST'),
           port: configService.getOrThrow<number>('EMAIL_PORT'),
-          secure: configService.getOrThrow('NODE_ENV') === 'development',
+          secure: isDev(configService),
           auth: {
             user: configService.getOrThrow<string>('EMAIL_LOGIN'),
             pass: configService.getOrThrow<string>('EMAIL_PASSWORD'),

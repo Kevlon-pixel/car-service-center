@@ -85,14 +85,14 @@ export class AuthService {
       const emailToken = randomUUID();
       const expires = new Date(Date.now() + 60 * 60 * 1000);
 
+      const link = `${this.CLIENT_URL}/auth/verify?token=${emailToken}`;
+      await this.mailService.sendVerification(newUser.email, link, expires);
+
       await this.userService.updateEmailVerifyToken(
         newUser.id,
         emailToken,
         expires,
       );
-
-      const link = `${this.CLIENT_URL}/auth/verify?token=${emailToken}`;
-      await this.mailService.sendVerification(newUser.email, link, expires);
 
       return {
         message: 'User created. Verification email sent.',
