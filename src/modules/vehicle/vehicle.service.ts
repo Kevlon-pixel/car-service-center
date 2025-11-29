@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ConflictException,
   ForbiddenException,
   Injectable,
@@ -11,7 +12,7 @@ import { AddVehicleDto } from './dto/add-vehicle.dto';
 import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 
 @Injectable()
-export class VehiclesService {
+export class VehicleService {
   constructor(private readonly prisma: PrismaService) {}
 
   async getMyVehicles(userId: string): Promise<Vehicle[]> {
@@ -42,7 +43,9 @@ export class VehiclesService {
         err instanceof Prisma.PrismaClientKnownRequestError &&
         err.code === 'P2002'
       ) {
-        throw new ConflictException('Vehicle with this license plate already exists');
+        throw new ConflictException(
+          'Vehicle with this license plate already exists',
+        );
       }
       throw new InternalServerErrorException('Failed to create vehicle');
     }
@@ -74,8 +77,12 @@ export class VehiclesService {
       });
 
       if (existing) {
-        throw new ConflictException('Vehicle with this license plate already exists');
+        throw new ConflictException(
+          'Vehicle with this license plate already exists',
+        );
       }
+    } else {
+      throw new BadRequestException('No fields provided for update');
     }
 
     try {

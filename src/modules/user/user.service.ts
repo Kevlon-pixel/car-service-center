@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { Prisma, SystemRole, User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateProfileDto } from './dto/update.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UserService {
@@ -48,7 +48,10 @@ export class UserService {
       const { passwordHash, ...userWithoutPassword } = newUser;
       return userWithoutPassword;
     } catch (err) {
-      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2002'
+      ) {
         throw new ConflictException('User with this email already exists');
       }
       if (err instanceof HttpException) {
@@ -64,48 +67,48 @@ export class UserService {
   ): Promise<Omit<User, 'passwordHash'>> {
     const data: Prisma.UserUpdateInput = {};
 
+    if (dto.email) {
+      const user = await this.prisma.user.findUnique({
+        where: { email: dto.email },
+      });
+      if (user && user.id !== userId) {
+        throw new ConflictException('User with this email already exists');
+      }
+      data.email = dto.email;
+    }
+
+    if (dto.newPassword) {
+      if (!dto.currentPassword) {
+        throw new BadRequestException('Current password is required');
+      }
+
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+      if (!user) {
+        throw new BadRequestException('User not found');
+      }
+
+      const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+      if (!ok) {
+        throw new UnauthorizedException('Current password is incorrect');
+      }
+
+      data.passwordHash = await bcrypt.hash(dto.newPassword, this.SALT_ROUNDS);
+    }
+
+    if (dto.name) {
+      data.name = dto.name;
+    }
+
+    if (dto.surname) {
+      data.surname = dto.surname;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException('No fields provided for update');
+    }
     try {
-      if (dto.email) {
-        const user = await this.prisma.user.findUnique({
-          where: { email: dto.email },
-        });
-        if (user && user.id !== userId) {
-          throw new ConflictException('User with this email already exists');
-        }
-        data.email = dto.email;
-      }
-
-      if (dto.newPassword) {
-        if (!dto.currentPassword) {
-          throw new BadRequestException('Current password is required');
-        }
-
-        const user = await this.prisma.user.findUnique({
-          where: { id: userId },
-        });
-        if (!user) {
-          throw new BadRequestException('User not found');
-        }
-
-        const ok = await bcrypt.compare(dto.currentPassword, user.passwordHash);
-        if (!ok) {
-          throw new UnauthorizedException('Current password is incorrect');
-        }
-
-        data.passwordHash = await bcrypt.hash(
-          dto.newPassword,
-          this.SALT_ROUNDS,
-        );
-      }
-
-      if (dto.name) {
-        data.name = dto.name;
-      }
-
-      if (dto.surname) {
-        data.surname = dto.surname;
-      }
-
       const updatedUser = await this.prisma.user.update({
         where: { id: userId },
         data,
@@ -147,7 +150,14 @@ export class UserService {
     Array<
       Pick<
         User,
-        'id' | 'email' | 'role' | 'name' | 'surname' | 'isEmailVerified' | 'createdAt' | 'updatedAt'
+        | 'id'
+        | 'email'
+        | 'role'
+        | 'name'
+        | 'surname'
+        | 'isEmailVerified'
+        | 'createdAt'
+        | 'updatedAt'
       >
     >
   > {

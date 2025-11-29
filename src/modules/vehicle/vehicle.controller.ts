@@ -9,7 +9,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { VehiclesService } from './vehicles.service';
+import { VehicleService } from './vehicle.service';
 import { JwtAuthGuard } from 'src/shared/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/shared/guards/roles.guard';
 import { SystemRole } from '@prisma/client';
@@ -21,19 +21,19 @@ import { UpdateVehicleDto } from './dto/update-vehicle.dto';
 @ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard)
 @Controller('vehicles')
-export class VehiclesController {
-  constructor(private readonly vehiclesService: VehiclesService) {}
+export class VehicleController {
+  constructor(private readonly vehicleService: VehicleService) {}
 
   @ApiOperation({ summary: 'Get user vehicles (List of client vehicles)' })
   @Get('my')
   async getMyVehicles(@Req() req) {
-    return this.vehiclesService.getMyVehicles(req.user.id);
+    return this.vehicleService.getMyVehicles(req.user.id);
   }
 
   @ApiOperation({ summary: 'Add new user vehicle (For clients)' })
   @Post()
   async addMyVehicle(@Req() req, @Body() dto: AddVehicleDto) {
-    return this.vehiclesService.addMyVehicle(req.user.id, dto);
+    return this.vehicleService.addMyVehicle(req.user.id, dto);
   }
 
   @ApiOperation({ summary: 'Update user vehicle (Only vehicle owner)' })
@@ -43,21 +43,21 @@ export class VehiclesController {
     @Param('id') id: string,
     @Body() dto: UpdateVehicleDto,
   ) {
-    return this.vehiclesService.updateMyVehicle(req.user.id, id, dto);
+    return this.vehicleService.updateMyVehicle(req.user.id, id, dto);
   }
 
   @ApiOperation({ summary: 'Delete user vehicle (Only vehicle owner)' })
   @Delete(':id')
   async deleteMyVehicle(@Req() req, @Param('id') id: string) {
-    return this.vehiclesService.deleteMyVehicle(req.user.id, id);
+    return this.vehicleService.deleteMyVehicle(req.user.id, id);
   }
 
   @ApiOperation({ summary: 'Get vehicle by id (Admin and Worker only)' })
-  @UseGuards( RolesGuard)
+  @UseGuards(RolesGuard)
   @Roles(SystemRole.ADMIN, SystemRole.WORKER)
   @Get(':id')
   async getVehicleById(@Param('id') id: string) {
-    return this.vehiclesService.getVehicleById(id);
+    return this.vehicleService.getVehicleById(id);
   }
 
   @ApiOperation({ summary: 'Get all vehicles (Admin and Worker only)' })
@@ -65,6 +65,6 @@ export class VehiclesController {
   @Roles(SystemRole.ADMIN, SystemRole.WORKER)
   @Get()
   async getAllVehicles() {
-    return this.vehiclesService.getAllVehicles();
+    return this.vehicleService.getAllVehicles();
   }
 }

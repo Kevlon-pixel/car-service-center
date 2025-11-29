@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { UpdateProfileDto } from './dto/update.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { SystemRole } from '@prisma/client';

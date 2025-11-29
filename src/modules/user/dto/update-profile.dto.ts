@@ -54,10 +54,3 @@ export class UpdateProfileDto {
   @IsString({ message: 'surname must be a string' })
   surname?: string;
 }
-
-export class UpdateUserDto extends PartialType(UpdateProfileDto) {
-  @ApiProperty({ example: 'USER', description: 'System role' })
-  @IsOptional()
-  @IsEnum(SystemRole, { message: 'role must be a valid enum value' })
-  role?: SystemRole;
-}
