@@ -40,38 +40,35 @@ export class ServiceService {
     }
   }
 
-  async updateService(
-    id: string,
-    dto: UpdateServiceDto,
-  ): Promise<Service> {
+  async updateService(id: string, dto: UpdateServiceDto): Promise<Service> {
     const service = await this.prisma.service.findUnique({ where: { id } });
     if (!service) {
       throw new NotFoundException('Service not found');
     }
 
+    const data: Prisma.ServiceUpdateInput = {};
+
+    if (dto.name !== undefined) {
+      data.name = dto.name;
+    }
+    if (dto.description !== undefined) {
+      data.description = dto.description;
+    }
+    if (dto.basePrice !== undefined) {
+      data.basePrice = new Prisma.Decimal(dto.basePrice);
+    }
+    if (dto.durationMin !== undefined) {
+      data.durationMin = dto.durationMin;
+    }
+    if (dto.isActive !== undefined) {
+      data.isActive = dto.isActive;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException('No fields provided for update');
+    }
+
     try {
-      const data: Prisma.ServiceUpdateInput = {};
-
-      if (dto.name !== undefined) {
-        data.name = dto.name;
-      }
-      if (dto.description !== undefined) {
-        data.description = dto.description;
-      }
-      if (dto.basePrice !== undefined) {
-        data.basePrice = new Prisma.Decimal(dto.basePrice);
-      }
-      if (dto.durationMin !== undefined) {
-        data.durationMin = dto.durationMin;
-      }
-      if (dto.isActive !== undefined) {
-        data.isActive = dto.isActive;
-      }
-
-      if (Object.keys(data).length === 0) {
-        throw new BadRequestException('No fields provided for update');
-      }
-
       return await this.prisma.service.update({
         where: { id },
         data,

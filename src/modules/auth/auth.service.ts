@@ -218,7 +218,7 @@ export class AuthService {
       },
     );
 
-    const decoded = this.jwtService.decode(refreshToken) as { exp?: number };
+    const decoded = this.jwtService.decode(refreshToken);
     if (!decoded?.exp) {
       throw new InternalServerErrorException('Failed to read token expiry');
     }

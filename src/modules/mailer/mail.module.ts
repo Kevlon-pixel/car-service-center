@@ -15,7 +15,7 @@ import { isDev } from 'src/shared/utils/is-dev.util';
         transport: {
           host: configService.getOrThrow<string>('EMAIL_HOST'),
           port: configService.getOrThrow<number>('EMAIL_PORT'),
-          secure: isDev(configService),
+          secure: !isDev(configService),
           auth: {
             user: configService.getOrThrow<string>('EMAIL_LOGIN'),
             pass: configService.getOrThrow<string>('EMAIL_PASSWORD'),

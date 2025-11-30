@@ -44,7 +44,7 @@ export class VehicleService {
         err.code === 'P2002'
       ) {
         throw new ConflictException(
-          'Vehicle with this license plate already exists',
+          'Vehicle with this license plate or vin number already exists',
         );
       }
       throw new InternalServerErrorException('Failed to create vehicle');

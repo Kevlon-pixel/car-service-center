@@ -75,6 +75,9 @@ export class UserService {
         throw new ConflictException('User with this email already exists');
       }
       data.email = dto.email;
+      data.isEmailVerified = false;
+      data.emailVerificationToken = null;
+      data.emailVerificationTokenExpire = null;
     }
 
     if (dto.newPassword) {
