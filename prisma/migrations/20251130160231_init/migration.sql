@@ -136,6 +136,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 CREATE UNIQUE INDEX "User_emailVerificationToken_key" ON "User"("emailVerificationToken");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "Vehicle_vin_key" ON "Vehicle"("vin");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "Vehicle_licensePlate_key" ON "Vehicle"("licensePlate");
 
 -- CreateIndex

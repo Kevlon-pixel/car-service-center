@@ -41,11 +41,13 @@ export class ServiceRequestService {
       );
     }
 
-    const service = await this.prisma.service.findFirst({
-      where: { id: dto.serviceId, isActive: true },
-    });
+    const service = dto.serviceId
+      ? await this.prisma.service.findFirst({
+          where: { id: dto.serviceId, isActive: true },
+        })
+      : null;
 
-    if (!service) {
+    if (dto.serviceId && !service) {
       throw new NotFoundException('Selected service not found');
     }
 
@@ -54,7 +56,7 @@ export class ServiceRequestService {
         data: {
           clientId,
           vehicleId: dto.vehicleId,
-          serviceId: dto.serviceId,
+          serviceId: dto.serviceId ?? null,
           desiredDate: dto.desiredDate ? new Date(dto.desiredDate) : null,
           comment: dto.comment,
         },
@@ -120,7 +122,7 @@ export class ServiceRequestService {
   async updateStatus(
     requestId: string,
     dto: UpdateRequestStatusDto,
-  ): Promise<RequestWithRelations> {
+  ): Promise<RequestWithClient> {
     const request = await this.prisma.serviceRequest.findUnique({
       where: { id: requestId },
     });

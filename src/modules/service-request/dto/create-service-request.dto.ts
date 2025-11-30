@@ -9,12 +9,13 @@ export class CreateServiceRequestDto {
   @IsString({ message: 'vehicleId must be a string' })
   vehicleId: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: 'service-id-123',
     description: 'Optional service to preselect',
   })
+  @IsOptional()
   @IsString({ message: 'serviceId must be a string' })
-  serviceId: string;
+  serviceId?: string;
 
   @ApiPropertyOptional({
     example: '2025-12-01T10:00:00.000Z',

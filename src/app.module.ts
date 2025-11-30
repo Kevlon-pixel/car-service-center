@@ -8,6 +8,7 @@ import { VehicleModule } from './modules/vehicle/vehicle.module';
 import { ServiceModule } from './modules/service/service.module';
 import { SparePartModule } from './modules/spare-part/spare-part.module';
 import { ServiceRequestModule } from './modules/service-request/service-request.module';
+import { WorkOrderModule } from './modules/work-order/work-order.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { ServiceRequestModule } from './modules/service-request/service-request.
     ServiceModule,
     SparePartModule,
     ServiceRequestModule,
+    WorkOrderModule,
   ],
   providers: [ConfigService],
 })
