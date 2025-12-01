@@ -1,0 +1,66 @@
+@import "../styles/variables";
+@import "../styles/mixins";
+
+.button {
+  border: 1px solid transparent;
+  border-radius: $radius-md;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease,
+    border-color 0.2s ease, color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: $surface;
+  background: $accent;
+  box-shadow: $shadow-soft;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.primary {
+  background: linear-gradient(135deg, $accent, darken($accent, 10%));
+  border-color: rgba($accent, 0.1);
+  color: white;
+}
+
+.ghost {
+  background: rgba($accent, 0.08);
+  border-color: rgba($accent, 0.2);
+  color: darken($accent, 12%);
+  box-shadow: none;
+}
+
+.outline {
+  background: transparent;
+  color: $text;
+  border-color: $border;
+  box-shadow: none;
+}
+
+.md {
+  padding: 12px 16px;
+  font-size: 15px;
+}
+
+.lg {
+  padding: 14px 20px;
+  font-size: 16px;
+}
+
+.fullWidth {
+  width: 100%;
+}

@@ -1,0 +1,142 @@
+@import "../shared/styles/variables";
+@import "../shared/styles/mixins";
+
+.appShell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid $border;
+}
+
+.headerBar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: $spacing;
+  padding: ($spacing * 1.25) 0;
+
+  @media (max-width: 960px) {
+    grid-template-columns: 1fr;
+    gap: $spacing * 0.75;
+  }
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing * 0.75;
+  color: inherit;
+}
+
+.brandMark {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba($accent, 0.1);
+  border: 1px solid rgba($accent, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: $accent;
+
+  img {
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.brandName {
+  display: block;
+  font-weight: 700;
+  font-size: 17px;
+  color: $text;
+}
+
+.brandTagline {
+  display: block;
+  color: $muted;
+  font-size: 12px;
+}
+
+.nav {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing;
+  justify-content: center;
+  font-weight: 600;
+
+  a {
+    color: $muted;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: $text;
+    }
+  }
+
+  @media (max-width: 960px) {
+    justify-content: flex-start;
+  }
+}
+
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing * 0.75;
+  justify-content: flex-end;
+
+  @media (max-width: 960px) {
+    justify-content: flex-start;
+  }
+}
+
+.main {
+  flex: 1;
+  padding: ($spacing * 1.5) 0 ($spacing * 2.5);
+}
+
+.footer {
+  background: $surface;
+  border-top: 1px solid $border;
+  padding: ($spacing * 1.5) 0 ($spacing * 2);
+  margin-top: $spacing;
+}
+
+.footerInner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $spacing * 1.25;
+  align-items: flex-start;
+}
+
+.footerBrand {
+  display: flex;
+  gap: $spacing;
+  align-items: center;
+}
+
+.footerCopy {
+  color: $muted;
+  font-size: 14px;
+}
+
+.footerLinks,
+.footerMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: $muted;
+
+  a {
+    color: $text;
+    font-weight: 600;
+  }
+}

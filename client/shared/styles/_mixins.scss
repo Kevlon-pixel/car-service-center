@@ -1,0 +1,20 @@
+@import "./variables";
+
+@mixin card {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-soft;
+}
+
+@mixin section {
+  max-width: $max-width;
+  margin: 0 auto;
+  padding: 0 ($spacing * 1.25);
+}
+
+@mixin focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba($accent, 0.25);
+  transition: box-shadow 0.2s ease;
+}

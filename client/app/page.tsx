@@ -1,65 +1,189 @@
-import Image from "next/image";
+'use client';
+
+import { Button, TextInput } from '@/shared/components';
+import styles from './page.module.scss';
+
+const services = [
+  {
+    title: 'Комплексная диагностика',
+    description:
+      'Подключаем дилерское оборудование, проверяем ходовую, тормоза, электрику и выдаем понятный чек-лист.',
+    icon: '01',
+  },
+  {
+    title: 'Плановое ТО и расходники',
+    description:
+      'Оригинальные масла и фильтры, контроль регламентов, сохраняем гарантию и историю обслуживания.',
+    icon: '02',
+  },
+  {
+    title: 'Ремонт подвески и электрики',
+    description:
+      'От замены рычагов и тормозов до поиска плавающих ошибок ЭБУ — делаем аккуратно и с гарантией.',
+    icon: '03',
+  },
+];
+
+const steps = [
+  {
+    title: 'Оставляете заявку онлайн',
+    description:
+      'Перезвоним за 10 минут, уточним симптомы, предложим варианты и согласуем удобное время визита.',
+  },
+  {
+    title: 'Фиксируем смету до начала работ',
+    description:
+      'Согласуем перечень запчастей, стоимость и сроки, чтобы исключить неожиданные траты и задержки.',
+  },
+  {
+    title: 'Отправляем отчеты по этапам',
+    description:
+      'Фото и видео из цеха, статус в личном кабинете, согласование допработ только с вашего разрешения.',
+  },
+];
+
+const stats = [
+  { value: '24/7', label: 'Поддержка' },
+  { value: '90%', label: 'Работ завершаем в согласованный срок' },
+  { value: '3 года+', label: 'Средний опыт мастеров' },
+];
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className={styles.page}>
+      <section className="section" id="hero">
+        <div className={`container ${styles.hero}`}>
+          <div className={styles.heroCopy}>
+            <span className="eyebrow">Автосервис</span>
+            <h1 className={styles.title}>
+              Ухаживаем за вашим автомобилем так, будто он наш
+            </h1>
+            <p className={styles.lead}>
+              Диагностика, ТО и ремонт без очередей. Честные сметы, внимание к
+              деталям и персональный мастер, который держит вас в курсе по
+              каждому этапу.
+            </p>
+            <div className={styles.ctaRow}>
+              <Button size="lg">Записаться на сервис</Button>
+            </div>
+          </div>
+          <div className={styles.heroCard}>
+            <div className={styles.heroCardTitle}>
+              <div>
+                <div className="eyebrow">Персональный мастер — на связи</div>
+                <h3 style={{ margin: '8px 0 0' }}>
+                  Начнем диагностику в течение 60 минут
+                </h3>
+              </div>
+              <span className={styles.badge}>online</span>
+            </div>
+            <ul className={styles.checklist}>
+              <li>
+                <span className={styles.checkIcon}>✓</span>
+                Фото и видео отчеты из цеха прямо в мессенджер
+              </li>
+              <li>
+                <span className={styles.checkIcon}>✓</span>
+                Четкий чек-лист работ и возврат замененных деталей
+              </li>
+            </ul>
+            <div className={styles.stats}>
+              {stats.map((item) => (
+                <div key={item.label} className={styles.statCard}>
+                  <p className={styles.statValue}>{item.value}</p>
+                  <p className={styles.statLabel}>{item.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="services">
+        <div className="container">
+          <span className="eyebrow">Услуги</span>
+          <h2 className="sectionTitle">
+            Берем на себя всё, чтобы машина ехала мягко и безопасно
+          </h2>
+          <p className="sectionSubtitle">
+            Работаем с легковыми и легкими коммерческими авто. Используем
+            сертифицированное оборудование, оригинальные расходники и даем
+            прозрачные рекомендации без навязывания.
           </p>
+          <div className={styles.servicesGrid}>
+            {services.map((service) => (
+              <div key={service.title} className={styles.serviceCard}>
+                <div className={styles.serviceIcon}>{service.icon}</div>
+                <h3 className={styles.serviceTitle}>{service.title}</h3>
+                <p className={styles.serviceDesc}>{service.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </section>
+
+      <section className="section" id="process">
+        <div className="container">
+          <span className="eyebrow">Процесс</span>
+          <h2 className="sectionTitle">
+            Четкие сроки, контроль качества и связь на каждом этапе
+          </h2>
+          <p className="sectionSubtitle">
+            Соблюдаем технологию производителя, фиксируем все в заказ-наряде и
+            предоставляем гарантию на работы и запчасти.
+          </p>
+          <div className={styles.steps}>
+            {steps.map((step, index) => (
+              <div key={step.title} className={styles.step}>
+                <div className={styles.stepNumber}>{index + 1}</div>
+                <h3 className={styles.stepTitle}>{step.title}</h3>
+                <p className={styles.stepDesc}>{step.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </main>
+      </section>
+
+      <section className="section" id="contact">
+        <div className="container">
+          <div className={styles.contactCard}>
+            <div>
+              <span className="eyebrow">Ответим в течение 15 минут</span>
+              <h2 className="sectionTitle" style={{ marginTop: 10 }}>
+                Оставьте контакты — подберем время, согласуем смету и резерв
+                запчастей
+              </h2>
+              <p className="sectionSubtitle">
+                Можно сразу приложить фото или список ошибок с панели, чтобы мы
+                подготовили детали и диагностическое оборудование заранее.
+              </p>
+              <div className={styles.tagList}>
+                <span className={styles.tag}>
+                  Гарантия на работу и запчасти
+                </span>
+              </div>
+            </div>
+            <form className={styles.form}>
+              <TextInput label="Имя" placeholder="Как к вам обращаться?" />
+              <TextInput
+                label="Телефон"
+                placeholder="+7 (999) 000-00-00"
+                type="tel"
+              />
+              <TextInput
+                label="Авто и запрос"
+                placeholder="BMW 3, нужен ремонт ходовой"
+                hint="Можно коротко описать проблему, пробег и желаемое время визита"
+              />
+              <div className={styles.contactActions}>
+                <Button type="submit" fullWidth>
+                  Оставить заявку
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

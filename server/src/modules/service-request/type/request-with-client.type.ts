@@ -9,6 +9,7 @@ export const adminRequestInclude: Prisma.ServiceRequestInclude = {
       email: true,
       name: true,
       surname: true,
+      phone: true,
       role: true,
     },
   },

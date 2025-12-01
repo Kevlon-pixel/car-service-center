@@ -1,0 +1,232 @@
+@import "../shared/styles/variables";
+@import "../shared/styles/mixins";
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 64px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: $spacing * 1.5;
+  align-items: center;
+  padding: 16px 0;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing;
+}
+
+.title {
+  font-size: clamp(32px, 3.6vw, 40px);
+  margin: 0;
+  line-height: 1.1;
+}
+
+.lead {
+  color: $muted;
+  font-size: 17px;
+  margin: 0;
+  max-width: 620px;
+}
+
+.ctaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing;
+  align-items: center;
+}
+
+.heroCard {
+  @include card;
+  padding: $spacing * 1.25;
+  display: grid;
+  gap: $spacing;
+  border-top: 3px solid $accent;
+}
+
+.heroCardTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.badge {
+  padding: 6px 12px;
+  border-radius: $radius-sm;
+  background: rgba($accent, 0.1);
+  color: darken($accent, 4%);
+  border: 1px solid rgba($accent, 0.2);
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.checklist {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: $muted;
+  }
+}
+
+.checkIcon {
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  background: rgba($accent, 0.08);
+  color: darken($accent, 6%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: $spacing;
+}
+
+.statCard {
+  @include card;
+  padding: $spacing;
+  border-top: 2px solid rgba($accent, 0.5);
+}
+
+.statValue {
+  font-size: 28px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.statLabel {
+  color: $muted;
+  margin: 0;
+}
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: $spacing * 1.1;
+  margin-top: $spacing;
+}
+
+.serviceCard {
+  @include card;
+  padding: $spacing * 1.25;
+  position: relative;
+  overflow: hidden;
+}
+
+.serviceIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba($accent, 0.08);
+  color: darken($accent, 8%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.serviceTitle {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.serviceDesc {
+  margin: 0;
+  color: $muted;
+}
+
+.process {
+  display: grid;
+  gap: $spacing;
+  margin-top: $spacing;
+}
+
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $spacing;
+}
+
+.step {
+  @include card;
+  padding: $spacing;
+  border-left: 3px solid $accent;
+}
+
+.stepNumber {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba($accent, 0.12);
+  color: darken($accent, 5%);
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.stepTitle {
+  margin: 0 0 6px;
+}
+
+.stepDesc {
+  margin: 0;
+  color: $muted;
+}
+
+.contactCard {
+  @include card;
+  padding: $spacing * 1.25;
+  display: grid;
+  gap: $spacing;
+  grid-template-columns: 1.2fr 0.9fr;
+  align-items: center;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contactActions {
+  display: flex;
+  gap: $spacing * 0.75;
+  align-items: center;
+}
+
+.form {
+  display: grid;
+  gap: $spacing * 0.75;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: $muted;
+  font-size: 14px;
+}
+
+.tag {
+  padding: 6px 10px;
+  border: 1px dashed rgba($accent, 0.4);
+  border-radius: $radius-sm;
+  background: rgba($accent, 0.05);
+}

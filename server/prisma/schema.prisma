@@ -37,6 +37,8 @@ model User {
   name    String
   surname String
 
+  phone String
+
   isEmailVerified              Boolean   @default(false)
   emailVerificationToken       String?   @unique
   emailVerificationTokenExpire DateTime?

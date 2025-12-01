@@ -1,0 +1,14 @@
+
+> client@0.1.0 dev
+> next dev -p 3001 -p 3002 --hostname 127.0.0.1
+
+  ▲ Next.js 14.2.7
+  - Local:        http://127.0.0.1:3002
+  - Network:      http://127.0.0.1:3002
+  - Environments: .env
+
+ ✓ Starting...
+ ✓ Ready in 1470ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1969ms (581 modules)
+ GET / 200 in 2096ms

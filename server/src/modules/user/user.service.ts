@@ -42,6 +42,7 @@ export class UserService {
           role: dto.role ?? SystemRole.USER,
           name: dto.name,
           surname: dto.surname,
+          phone: dto.phone,
         },
       });
 
@@ -108,6 +109,10 @@ export class UserService {
       data.surname = dto.surname;
     }
 
+    if (dto.phone) {
+      data.phone = dto.phone;
+    }
+
     if (Object.keys(data).length === 0) {
       throw new BadRequestException('No fields provided for update');
     }
@@ -158,6 +163,7 @@ export class UserService {
         | 'role'
         | 'name'
         | 'surname'
+        | 'phone'
         | 'isEmailVerified'
         | 'createdAt'
         | 'updatedAt'
@@ -172,6 +178,7 @@ export class UserService {
           role: true,
           name: true,
           surname: true,
+          phone: true,
           isEmailVerified: true,
           createdAt: true,
           updatedAt: true,

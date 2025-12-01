@@ -1,0 +1,44 @@
+@import "./variables";
+@import "./mixins";
+
+:root {
+  --color-accent: #{$accent};
+  --color-background: #{$background};
+  --color-surface: #{$surface};
+  --color-text: #{$text};
+  --color-muted: #{$muted};
+  --color-border: #{$border};
+  --radius-lg: #{$radius-lg};
+  --radius-md: #{$radius-md};
+  --radius-sm: #{$radius-sm};
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+::selection {
+  background: rgba($accent, 0.12);
+}

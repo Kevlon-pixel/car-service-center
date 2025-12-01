@@ -1,10 +1,8 @@
-import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { SystemRole } from '@prisma/client';
-
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
-  IsEnum,
   IsOptional,
+  IsPhoneNumber,
   IsString,
   MinLength,
 } from 'class-validator';
@@ -53,4 +51,12 @@ export class UpdateProfileDto {
   @IsOptional()
   @IsString({ message: 'surname must be a string' })
   surname?: string;
+
+  @ApiProperty({
+    example: '+7 999 123-45-67',
+    description: 'Phone number',
+  })
+  @IsOptional()
+  @IsPhoneNumber('RU', { message: 'phone must be a valid Russian number' })
+  phone?: string;
 }
