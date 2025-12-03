@@ -17,3 +17,8 @@ export const VEHICLE_ENDPOINTS = {
   my: '/vehicles/my',
   add: '/vehicles',
 };
+
+export const SERVICE_REQUEST_ENDPOINTS = {
+  create: '/service-requests',
+  my: '/service-requests/my',
+};

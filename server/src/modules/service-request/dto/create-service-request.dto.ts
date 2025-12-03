@@ -10,14 +10,6 @@ export class CreateServiceRequestDto {
   vehicleId: string;
 
   @ApiPropertyOptional({
-    example: 'service-id-123',
-    description: 'Optional service to preselect',
-  })
-  @IsOptional()
-  @IsString({ message: 'serviceId must be a string' })
-  serviceId?: string;
-
-  @ApiPropertyOptional({
     example: '2025-12-01T10:00:00.000Z',
     description: 'Preferred visit date (ISO string)',
   })
@@ -25,12 +17,11 @@ export class CreateServiceRequestDto {
   @IsDateString({}, { message: 'desiredDate must be a valid ISO date string' })
   desiredDate?: string;
 
-  @ApiPropertyOptional({
+  @ApiProperty({
     example: 'Need car back by evening',
     description: 'Extra notes from client',
   })
-  @IsOptional()
   @IsString({ message: 'comment must be a string' })
   @MaxLength(1000, { message: 'comment must be at most 1000 characters' })
-  comment?: string;
+  comment: string;
 }

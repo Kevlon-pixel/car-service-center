@@ -41,22 +41,11 @@ export class ServiceRequestService {
       );
     }
 
-    const service = dto.serviceId
-      ? await this.prisma.service.findFirst({
-          where: { id: dto.serviceId, isActive: true },
-        })
-      : null;
-
-    if (dto.serviceId && !service) {
-      throw new NotFoundException('Selected service not found');
-    }
-
     try {
       return await this.prisma.serviceRequest.create({
         data: {
           clientId,
           vehicleId: dto.vehicleId,
-          serviceId: dto.serviceId ?? null,
           desiredDate: dto.desiredDate ? new Date(dto.desiredDate) : null,
           comment: dto.comment,
         },

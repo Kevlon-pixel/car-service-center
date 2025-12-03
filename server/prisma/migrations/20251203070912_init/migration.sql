@@ -15,6 +15,7 @@ CREATE TABLE "User" (
     "role" "SystemRole" NOT NULL DEFAULT 'USER',
     "name" TEXT NOT NULL,
     "surname" TEXT NOT NULL,
+    "phone" TEXT NOT NULL,
     "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,
     "emailVerificationToken" TEXT,
     "emailVerificationTokenExpire" TIMESTAMP(3),
@@ -73,9 +74,8 @@ CREATE TABLE "ServiceRequest" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "vehicleId" TEXT NOT NULL,
-    "serviceId" TEXT,
     "desiredDate" TIMESTAMP(3),
-    "comment" TEXT,
+    "comment" TEXT NOT NULL,
     "status" "RequestStatus" NOT NULL DEFAULT 'NEW',
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -158,9 +158,6 @@ ALTER TABLE "ServiceRequest" ADD CONSTRAINT "ServiceRequest_clientId_fkey" FOREI
 
 -- AddForeignKey
 ALTER TABLE "ServiceRequest" ADD CONSTRAINT "ServiceRequest_vehicleId_fkey" FOREIGN KEY ("vehicleId") REFERENCES "Vehicle"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "ServiceRequest" ADD CONSTRAINT "ServiceRequest_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "Service"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "WorkOrder" ADD CONSTRAINT "WorkOrder_clientId_fkey" FOREIGN KEY ("clientId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

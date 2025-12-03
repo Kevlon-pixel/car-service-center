@@ -10,14 +10,6 @@ export const baseRequestInclude: Prisma.ServiceRequestInclude = {
       year: true,
     },
   },
-  service: {
-    select: {
-      id: true,
-      name: true,
-      basePrice: true,
-      durationMin: true,
-    },
-  },
 };
 
 export type RequestWithRelations = Prisma.ServiceRequestGetPayload<{

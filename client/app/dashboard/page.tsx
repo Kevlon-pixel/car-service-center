@@ -15,6 +15,10 @@ import {
   addMyVehicle,
   fetchMyVehicles,
 } from "@features/vehicle/api/vehicleApi";
+import {
+  CreateServiceRequestPayload,
+  createServiceRequest,
+} from "@features/service-request/api/serviceRequestApi";
 import styles from "./dashboard.module.scss";
 
 export default function DashboardPage() {
@@ -33,6 +37,14 @@ export default function DashboardPage() {
     licensePlate: "",
   });
   const [saving, setSaving] = useState(false);
+  const [requestSaving, setRequestSaving] = useState(false);
+  const [requestSuccess, setRequestSuccess] = useState<string | null>(null);
+  const [requestError, setRequestError] = useState<string | null>(null);
+  const [requestForm, setRequestForm] = useState<{
+    vehicleId: string;
+    desiredDate: string;
+    comment: string;
+  }>({ vehicleId: "", desiredDate: "", comment: "" });
 
   useEffect(() => {
     const loadData = async () => {
@@ -48,6 +60,9 @@ export default function DashboardPage() {
         setVehicleLoading(true);
         const myVehicles = await fetchMyVehicles();
         setVehicles(myVehicles);
+        if (myVehicles.length > 0 && !requestForm.vehicleId) {
+          setRequestForm((prev) => ({ ...prev, vehicleId: myVehicles[0].id }));
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Не удалось загрузить профиль"
@@ -60,6 +75,12 @@ export default function DashboardPage() {
 
     loadData();
   }, []);
+
+  useEffect(() => {
+    if (vehicles.length > 0 && !requestForm.vehicleId) {
+      setRequestForm((prev) => ({ ...prev, vehicleId: vehicles[0].id }));
+    }
+  }, [vehicles, requestForm.vehicleId]);
 
   const handleLogout = async () => {
     await logoutUser();
@@ -87,6 +108,38 @@ export default function DashboardPage() {
       );
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCreateRequest = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    setRequestError(null);
+    setRequestSuccess(null);
+    setRequestSaving(true);
+    try {
+      const payload: CreateServiceRequestPayload = {
+        vehicleId: requestForm.vehicleId,
+        desiredDate: requestForm.desiredDate || undefined,
+        comment: requestForm.comment.trim(),
+      };
+      if (!payload.comment) {
+        throw new Error("Комментарий обязателен");
+      }
+      await createServiceRequest(payload);
+      setRequestSuccess("Заявка отправлена. Мы скоро свяжемся с вами.");
+      setRequestForm((prev) => ({
+        vehicleId: prev.vehicleId,
+        desiredDate: "",
+        comment: "",
+      }));
+    } catch (err) {
+      setRequestError(
+        err instanceof Error ? err.message : "Не удалось отправить заявку"
+      );
+    } finally {
+      setRequestSaving(false);
     }
   };
 
@@ -259,6 +312,95 @@ export default function DashboardPage() {
               )}
             </div>
           </div>
+        </div>
+
+        <div className={styles.card}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <p className={styles.muted}>Заявка в сервис</p>
+              <h3 style={{ margin: "4px 0 0" }}>Новая заявка</h3>
+            </div>
+            <p className={styles.note}>
+              Выберите авто, укажите удобное время и оставьте комментарий.
+            </p>
+          </div>
+
+          <form className={styles.requestForm} onSubmit={handleCreateRequest}>
+            <div className={styles.requestGrid}>
+              <label className={styles.selectLabel}>
+                <span className={styles.label}>Автомобиль</span>
+                <select
+                  className={styles.select}
+                  required
+                  value={requestForm.vehicleId}
+                  onChange={(e) =>
+                    setRequestForm((prev) => ({
+                      ...prev,
+                      vehicleId: e.target.value,
+                    }))
+                  }
+                >
+                  <option value="" disabled>
+                    Выберите авто
+                  </option>
+                  {vehicles.map((car) => (
+                    <option key={car.id} value={car.id}>
+                      {car.make} {car.model} {car.licensePlate && `(${car.licensePlate})`}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <TextInput
+                label="Желаемая дата"
+                type="datetime-local"
+                min={new Date(Date.now() + 60 * 60 * 1000)
+                  .toISOString()
+                  .slice(0, 16)}
+                value={requestForm.desiredDate}
+                onChange={(e) =>
+                  setRequestForm((prev) => ({
+                    ...prev,
+                    desiredDate: e.target.value,
+                  }))
+                }
+              />
+              <TextInput
+                label="Комментарий"
+                placeholder="Что случилось? Когда удобно?"
+                required
+                value={requestForm.comment}
+                onChange={(e) =>
+                  setRequestForm((prev) => ({
+                    ...prev,
+                    comment: e.target.value,
+                  }))
+                }
+              />
+            </div>
+
+            {requestError && (
+              <div className={styles.alert} style={{ margin: 0 }}>
+                <span>{requestError}</span>
+              </div>
+            )}
+            {requestSuccess && (
+              <div className={styles.success}>{requestSuccess}</div>
+            )}
+
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Button type="submit" disabled={requestSaving || vehicles.length === 0}>
+                {requestSaving ? "Отправляем…" : "Отправить заявку"}
+              </Button>
+              {vehicles.length === 0 && (
+                <span className={styles.note}>
+                  Добавьте автомобиль, чтобы оформить заявку.
+                </span>
+              )}
+              {!requestForm.comment.trim() && (
+                <span className={styles.note}>Комментарий обязателен.</span>
+              )}
+            </div>
+          </form>
         </div>
       </div>
     </div>
