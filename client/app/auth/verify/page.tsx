@@ -26,10 +26,13 @@ export default function VerifyEmailPage() {
     const verify = async () => {
       try {
         await verifyEmail(token);
-        await fetchProfile();
+        const me = await fetchProfile();
         setStatus('success');
         setMessage('Почта подтверждена. Сейчас перейдем в кабинет.');
-        setTimeout(() => router.replace('/dashboard'), 1200);
+        setTimeout(
+          () => router.replace(me.role === 'WORKER' ? '/worker' : '/dashboard'),
+          1200,
+        );
       } catch (err) {
         setStatus('error');
         setMessage(

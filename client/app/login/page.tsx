@@ -20,8 +20,9 @@ export default function LoginPage() {
 
     try {
       await loginUser(form);
-      await fetchProfile();
-      router.replace('/dashboard');
+      const me = await fetchProfile();
+      const target = me.role === 'WORKER' ? '/worker' : '/dashboard';
+      router.replace(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось войти');
     } finally {

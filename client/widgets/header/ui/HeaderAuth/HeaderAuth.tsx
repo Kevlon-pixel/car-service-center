@@ -59,13 +59,17 @@ export function HeaderAuth() {
   }
 
   if (state.status === 'user') {
+    const isWorker = state.user.role === 'WORKER';
+    const dashboardHref = isWorker ? '/worker' : '/dashboard';
+    const dashboardLabel = isWorker ? 'Кабинет сотрудника' : 'Личный кабинет';
+
     return (
       <>
         <Link
-          href="/dashboard"
+          href={dashboardHref}
           className={`${buttonStyles.button} ${buttonStyles.ghost} ${buttonStyles.md}`}
         >
-          Личный кабинет
+          {dashboardLabel}
         </Link>
         <button
           type="button"

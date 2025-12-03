@@ -162,6 +162,11 @@ export default function DashboardPage() {
     );
   }
 
+  if (profile.role === "WORKER") {
+    router.replace("/worker");
+    return null;
+  }
+
   return (
     <div className="container">
       <div className={styles.dashboard}>
