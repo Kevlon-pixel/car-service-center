@@ -1,7 +1,7 @@
 'use client';
 
-import { Button, TextInput } from '@/shared/components';
-import styles from './page.module.scss';
+import { Button, TextInput } from '@shared/ui';
+import styles from './home.module.scss';
 
 const services = [
   {

@@ -48,6 +48,7 @@ export class AuthService {
       const now = new Date();
 
       const user = await this.userService.findUserByEmail(dto.email);
+
       if (user) {
         if (user.isEmailVerified) {
           throw new ConflictException('User with this email already verified');

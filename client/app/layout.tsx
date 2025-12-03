@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Inter, Roboto_Mono } from 'next/font/google';
-import { Button } from '@/shared/components/Button';
-import styles from './layout.module.scss';
+import { HeaderAuth } from '@widgets/header/ui/HeaderAuth/HeaderAuth';
+import styles from './app-shell.module.scss';
 import './globals.scss';
 
 const inter = Inter({
@@ -19,13 +19,13 @@ const robotoMono = Roboto_Mono({
 const navLinks = [
   { href: '/#services', label: 'Услуги' },
   { href: '/#process', label: 'Как мы работаем' },
-  { href: '/#contact', label: 'Записаться' },
+  { href: '/#contact', label: 'Контакты' },
 ];
 
 export const metadata: Metadata = {
-  title: 'Car Service Center | Премиальный автосервис',
+  title: 'Car Service Center | Автосервис и ремонт',
   description:
-    'Современный автосервис: диагностика, регламентное ТО, ремонт и помощь на дороге. Онлайн-запись, прозрачные сметы и гарантия на работы.',
+    'Автосервис полного цикла: диагностика, обслуживание и ремонт автомобиля. Онлайн-запись, прозрачные сроки и поддержка на каждом этапе.',
   icons: {
     icon: '/gear.svg',
     shortcut: '/gear.svg',
@@ -58,7 +58,7 @@ export default function RootLayout({
                   <span>
                     <span className={styles.brandName}>CarService</span>
                     <span className={styles.brandTagline}>
-                      Точный сервис и прозрачные сроки ремонта
+                      Онлайн-запись и сопровождение вашего авто в одном месте
                     </span>
                   </span>
                 </Link>
@@ -70,8 +70,7 @@ export default function RootLayout({
                   ))}
                 </nav>
                 <div className={styles.headerActions}>
-                  <Button variant="ghost">Цены и услуги</Button>
-                  <Button>Онлайн-запись</Button>
+                  <HeaderAuth />
                 </div>
               </div>
             </div>
@@ -93,7 +92,7 @@ export default function RootLayout({
                     <div className={styles.brandName}>CarService</div>
                     <div className={styles.footerCopy}>
                       Полный цикл обслуживания: диагностика, ТО, ремонт,
-                      подготовка к дальним поездкам и поддержка на дороге.
+                      подбор запчастей и консультации по уходу за авто.
                     </div>
                   </div>
                 </div>
@@ -102,8 +101,8 @@ export default function RootLayout({
                   <a href="mailto:care@carservice.ru">care@carservice.ru</a>
                 </div>
                 <div className={styles.footerMeta}>
-                  <span>График: 9:00 — 20:00, без выходных</span>
-                  <span>Таганрог, ул. Чехова, 1</span>
+                  <span>График: 9:00 – 20:00, без выходных</span>
+                  <span>Москва, ул. Пример, 1</span>
                 </div>
               </div>
             </div>

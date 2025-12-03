@@ -2,10 +2,22 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { ConfigService } from '@nestjs/config';
 import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const configService = app.get(ConfigService);
+  const clientUrl = configService.get<string>('CLIENT_URL');
+  const globalPrefix = 'api';
+
+  app.enableCors({
+    origin: clientUrl ?? 'http://localhost:3001',
+    credentials: true,
+  });
+
+  app.setGlobalPrefix(globalPrefix);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -32,7 +44,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup(globalPrefix, app, document);
 
   app.use(cookieParser());
 

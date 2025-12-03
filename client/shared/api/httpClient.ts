@@ -1,10 +1,22 @@
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+import { API_URL } from '@shared/config/api';
 
 export interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
 }
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000/api';
+export const API_BASE = API_URL;
+
+export class ApiError extends Error {
+  status: number;
+  details?: unknown;
+
+  constructor(message: string, status: number, details?: unknown) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.details = details;
+  }
+}
 
 function buildUrl(path: string, params?: RequestConfig['params']) {
   const url = new URL(
@@ -34,6 +46,7 @@ export async function httpClient<T>(
       'Content-Type': 'application/json',
       ...headers,
     },
+    credentials: init.credentials ?? 'include',
     ...init,
   });
 
@@ -48,8 +61,10 @@ export async function httpClient<T>(
       typeof data === 'string'
         ? data
         : ((data as Record<string, unknown>)?.message ?? 'Unexpected error');
-    throw new Error(
+    throw new ApiError(
       Array.isArray(message) ? message.join(', ') : String(message),
+      response.status,
+      data,
     );
   }
 

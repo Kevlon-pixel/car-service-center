@@ -24,9 +24,11 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@shared/*": ["shared/*"],
+      "@features/*": ["features/*"],
+      "@widgets/*": ["widgets/*"],
+      "@entities/*": ["entities/*"]
     }
   },
   "include": [

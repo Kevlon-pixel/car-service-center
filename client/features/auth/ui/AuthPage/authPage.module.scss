@@ -1,0 +1,79 @@
+@import "../../../../shared/styles/variables";
+@import "../../../../shared/styles/mixins";
+
+.authWrapper {
+  max-width: 520px;
+  margin: 0 auto;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 28px;
+  box-shadow: $shadow-soft;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing * 0.75;
+
+  @media (max-width: 640px) {
+    padding: 22px;
+  }
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+}
+
+.subtitle {
+  margin: 0;
+  color: $muted;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing * 0.75;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing * 0.75;
+  flex-wrap: wrap;
+
+  a {
+    color: $accent;
+    font-weight: 600;
+  }
+}
+
+.status {
+  padding: 10px 12px;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  border: 1px solid transparent;
+}
+
+.error {
+  @extend .status;
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecdd3;
+}
+
+.success {
+  @extend .status;
+  background: #ecfdf3;
+  color: #14532d;
+  border-color: #bbf7d0;
+}
+
+.linkRow {
+  text-align: center;
+  color: $muted;
+  font-size: 14px;
+
+  a {
+    color: $accent;
+    font-weight: 700;
+  }
+}
