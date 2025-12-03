@@ -12,3 +12,8 @@ export const AUTH_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   me: '/users/me',
 };
+
+export const VEHICLE_ENDPOINTS = {
+  my: '/vehicles/my',
+  add: '/vehicles',
+};

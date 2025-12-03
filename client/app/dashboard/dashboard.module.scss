@@ -37,6 +37,62 @@
   gap: $spacing;
 }
 
+.vehicles {
+  display: grid;
+  gap: $spacing * 0.75;
+}
+
+.vehicleList {
+  display: grid;
+  gap: $spacing * 0.5;
+}
+
+.vehicleCard {
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: $spacing * 0.75;
+  background: #fafbff;
+  display: grid;
+  gap: 6px;
+}
+
+.vehicleTitle {
+  font-weight: 700;
+  margin: 0;
+}
+
+.vehicleMeta {
+  color: $muted;
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.vehicleForm {
+  display: grid;
+  gap: $spacing * 0.75;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: $spacing * 0.75;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing;
+  flex-wrap: wrap;
+}
+
+.note {
+  font-size: 13px;
+  color: $muted;
+}
+
 .label {
   font-size: 14px;
   color: $muted;
