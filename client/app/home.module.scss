@@ -41,6 +41,12 @@
   align-items: center;
 }
 
+.ctaNote {
+  color: $muted;
+  font-size: 14px;
+  max-width: 420px;
+}
+
 .heroCard {
   @include card;
   padding: $spacing * 1.25;
@@ -190,43 +196,4 @@
 .stepDesc {
   margin: 0;
   color: $muted;
-}
-
-.contactCard {
-  @include card;
-  padding: $spacing * 1.25;
-  display: grid;
-  gap: $spacing;
-  grid-template-columns: 1.2fr 0.9fr;
-  align-items: center;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.contactActions {
-  display: flex;
-  gap: $spacing * 0.75;
-  align-items: center;
-}
-
-.form {
-  display: grid;
-  gap: $spacing * 0.75;
-}
-
-.tagList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: $muted;
-  font-size: 14px;
-}
-
-.tag {
-  padding: 6px 10px;
-  border: 1px dashed rgba($accent, 0.4);
-  border-radius: $radius-sm;
-  background: rgba($accent, 0.05);
 }

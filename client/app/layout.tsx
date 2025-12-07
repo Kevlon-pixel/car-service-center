@@ -19,7 +19,6 @@ const robotoMono = Roboto_Mono({
 const navLinks = [
   { href: '/#services', label: 'Услуги' },
   { href: '/#process', label: 'Как мы работаем' },
-  { href: '/#contact', label: 'Контакты' },
 ];
 
 export const metadata: Metadata = {

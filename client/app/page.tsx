@@ -1,6 +1,9 @@
 'use client';
 
-import { Button, TextInput } from '@shared/ui';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { Button } from '@shared/ui';
+import { fetchProfile, restoreSession } from '@features/auth/api/authApi';
 import styles from './home.module.scss';
 
 const services = [
@@ -49,6 +52,36 @@ const stats = [
 ];
 
 export default function Home() {
+  const router = useRouter();
+  const [ctaMessage, setCtaMessage] = useState<string | null>(null);
+  const [ctaLoading, setCtaLoading] = useState(false);
+
+  const handleBookClick = async () => {
+    setCtaMessage(null);
+    setCtaLoading(true);
+    try {
+      const token = await restoreSession();
+      if (!token) {
+        router.push('/login');
+        return;
+      }
+
+      const profile = await fetchProfile();
+      if (profile.role === 'USER') {
+        router.push('/dashboard');
+        return;
+      }
+
+      setCtaMessage(
+        'Вы вошли как сотрудник или администратор. Для записи на сервис авторизуйтесь как клиент.'
+      );
+    } catch {
+      router.push('/login');
+    } finally {
+      setCtaLoading(false);
+    }
+  };
+
   return (
     <div className={styles.page}>
       <section className="section" id="hero">
@@ -64,7 +97,10 @@ export default function Home() {
               каждому этапу.
             </p>
             <div className={styles.ctaRow}>
-              <Button size="lg">Записаться на сервис</Button>
+              <Button size="lg" onClick={handleBookClick} disabled={ctaLoading}>
+                {ctaLoading ? 'Проверяем доступ…' : 'Записаться на сервис'}
+              </Button>
+              {ctaMessage && <span className={styles.ctaNote}>{ctaMessage}</span>}
             </div>
           </div>
           <div className={styles.heroCard}>
@@ -140,47 +176,6 @@ export default function Home() {
                 <p className={styles.stepDesc}>{step.description}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="contact">
-        <div className="container">
-          <div className={styles.contactCard}>
-            <div>
-              <span className="eyebrow">Ответим в течение 15 минут</span>
-              <h2 className="sectionTitle" style={{ marginTop: 10 }}>
-                Оставьте контакты — подберем время, согласуем смету и резерв
-                запчастей
-              </h2>
-              <p className="sectionSubtitle">
-                Можно сразу приложить фото или список ошибок с панели, чтобы мы
-                подготовили детали и диагностическое оборудование заранее.
-              </p>
-              <div className={styles.tagList}>
-                <span className={styles.tag}>
-                  Гарантия на работу и запчасти
-                </span>
-              </div>
-            </div>
-            <form className={styles.form}>
-              <TextInput label="Имя" placeholder="Как к вам обращаться?" />
-              <TextInput
-                label="Телефон"
-                placeholder="+7 (999) 000-00-00"
-                type="tel"
-              />
-              <TextInput
-                label="Авто и запрос"
-                placeholder="BMW 3, нужен ремонт ходовой"
-                hint="Можно коротко описать проблему, пробег и желаемое время визита"
-              />
-              <div className={styles.contactActions}>
-                <Button type="submit" fullWidth>
-                  Оставить заявку
-                </Button>
-              </div>
-            </form>
           </div>
         </div>
       </section>

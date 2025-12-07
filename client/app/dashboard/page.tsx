@@ -196,26 +196,6 @@ export default function DashboardPage() {
               <p className={styles.label}>Телефон</p>
               <p className={styles.value}>{profile.phone}</p>
             </div>
-            <div>
-              <p className={styles.label}>Подтверждение почты</p>
-              <p className={styles.value}>
-                {profile.isEmailVerified
-                  ? "Подтверждена"
-                  : "Ожидает подтверждения"}
-              </p>
-            </div>
-            <div>
-              <p className={styles.label}>Создан</p>
-              <p className={styles.value}>
-                {new Date(profile.createdAt).toLocaleString()}
-              </p>
-            </div>
-            <div>
-              <p className={styles.label}>Обновлен</p>
-              <p className={styles.value}>
-                {new Date(profile.updatedAt).toLocaleString()}
-              </p>
-            </div>
           </div>
         </div>
 
