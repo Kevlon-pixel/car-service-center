@@ -19,6 +19,7 @@ import { AddWorkOrderPartDto } from './dto/add-work-order-part.dto';
 import { AddWorkOrderServiceDto } from './dto/add-work-order-service.dto';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderStatusDto } from './dto/update-work-order-status.dto';
+import { UpdateWorkOrderDetailsDto } from './dto/update-work-order-details.dto';
 import { WorkOrderFiltersDto } from './dto/work-order-filters.dto';
 import { WorkOrderService } from './work-order.service';
 
@@ -58,6 +59,19 @@ export class WorkOrderController {
   @Get(':id')
   async getById(@Param('id') id: string) {
     return this.workOrderService.getById(id);
+  }
+
+  @ApiOperation({
+    summary: 'Update work order details (Admins and Workers)',
+  })
+  @UseGuards(RolesGuard)
+  @Roles(SystemRole.ADMIN, SystemRole.WORKER)
+  @Patch(':id')
+  async updateDetails(
+    @Param('id') id: string,
+    @Body() dto: UpdateWorkOrderDetailsDto,
+  ) {
+    return this.workOrderService.updateDetails(id, dto);
   }
 
   @ApiOperation({

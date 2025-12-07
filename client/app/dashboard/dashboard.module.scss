@@ -98,6 +98,18 @@
   gap: 6px;
 }
 
+.stack {
+  display: grid;
+  gap: $spacing * 0.75;
+}
+
+.inlineForm {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, max-content));
+  gap: $spacing * 0.75;
+  align-items: end;
+}
+
 .requestForm {
   display: grid;
   gap: $spacing * 0.75;
@@ -166,4 +178,144 @@
   justify-content: space-between;
   gap: $spacing;
   align-items: center;
+}
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.requestList {
+  display: grid;
+  gap: $spacing * 0.75;
+}
+
+.requestCard {
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: $spacing * 0.75;
+  background: #fafbff;
+  display: grid;
+  gap: 8px;
+}
+
+.requestHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing * 0.5;
+  flex-wrap: wrap;
+}
+
+.requestTitle {
+  margin: 0;
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.requestMeta {
+  color: $muted;
+  font-size: 13px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.requestComment {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: $radius-sm;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.2px;
+  border: 1px solid rgba($accent, 0.2);
+}
+
+.statusNew {
+  background: rgba($accent, 0.08);
+  border-color: rgba($accent, 0.25);
+  color: darken($accent, 3%);
+}
+
+.statusConfirmed {
+  background: #ecfdf3;
+  border-color: #bbf7d0;
+  color: #15803d;
+}
+
+.statusCompleted {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.statusCancelled {
+  background: #fef2f2;
+  border-color: #fecdd3;
+  color: #be123c;
+}
+
+.statusInProgress {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #b45309;
+}
+
+.tableWrapper {
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.simpleTable {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid $border;
+    text-align: left;
+  }
+
+  th {
+    background: #f8fafc;
+    font-size: 14px;
+    color: $muted;
+    font-weight: 600;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.tableTitle {
+  padding: 10px 12px;
+  font-weight: 700;
+  border-bottom: 1px solid $border;
+  background: #f8fafc;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: $accent;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 600;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }

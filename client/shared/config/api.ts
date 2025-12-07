@@ -11,6 +11,7 @@ export const AUTH_ENDPOINTS = {
 
 export const USER_ENDPOINTS = {
   me: '/users/me',
+  all: '/users',
 };
 
 export const VEHICLE_ENDPOINTS = {
@@ -21,4 +22,25 @@ export const VEHICLE_ENDPOINTS = {
 export const SERVICE_REQUEST_ENDPOINTS = {
   create: '/service-requests',
   my: '/service-requests/my',
+  all: '/service-requests',
+  updateStatus: (id: string) => `/service-requests/${id}/status`,
+};
+
+export const WORK_ORDER_ENDPOINTS = {
+  base: '/work-orders',
+  all: '/work-orders',
+  byId: (id: string) => `/work-orders/${id}`,
+  create: '/work-orders',
+  update: (id: string) => `/work-orders/${id}`,
+  addService: (id: string) => `/work-orders/${id}/services`,
+  addPart: (id: string) => `/work-orders/${id}/parts`,
+  updateStatus: (id: string) => `/work-orders/${id}/status`,
+};
+
+export const SERVICE_ENDPOINTS = {
+  all: '/services',
+};
+
+export const SPARE_PART_ENDPOINTS = {
+  all: '/spare-parts',
 };

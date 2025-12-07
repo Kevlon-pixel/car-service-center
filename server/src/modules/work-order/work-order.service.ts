@@ -21,6 +21,7 @@ import { WorkOrderFiltersDto } from './dto/work-order-filters.dto';
 import { UpdateWorkOrderStatusDto } from './dto/update-work-order-status.dto';
 import { AddWorkOrderServiceDto } from './dto/add-work-order-service.dto';
 import { AddWorkOrderPartDto } from './dto/add-work-order-part.dto';
+import { UpdateWorkOrderDetailsDto } from './dto/update-work-order-details.dto';
 
 @Injectable()
 export class WorkOrderService {
@@ -179,6 +180,71 @@ export class WorkOrderService {
       });
     } catch (err) {
       throw new InternalServerErrorException('Failed to update work order');
+    }
+  }
+
+  async updateDetails(
+    id: string,
+    dto: UpdateWorkOrderDetailsDto,
+  ): Promise<WorkOrderWithRelations> {
+    const workOrder = await this.prisma.workOrder.findUnique({
+      where: { id },
+    });
+
+    if (!workOrder) {
+      throw new NotFoundException('Work order not found');
+    }
+
+    if (
+      workOrder.status === WorkOrderStatus.COMPLETED ||
+      workOrder.status === WorkOrderStatus.CANCELLED
+    ) {
+      throw new BadRequestException('Work order is not editable');
+    }
+
+    if (dto.responsibleWorkerId) {
+      const worker = await this.prisma.user.findUnique({
+        where: { id: dto.responsibleWorkerId },
+      });
+
+      if (!worker) {
+        throw new NotFoundException('Responsible worker does not exist');
+      }
+
+      if (
+        worker.role !== SystemRole.ADMIN &&
+        worker.role !== SystemRole.WORKER
+      ) {
+        throw new BadRequestException(
+          'Responsible worker must be an Admin or Worker',
+        );
+      }
+    }
+
+    const data: Prisma.WorkOrderUncheckedUpdateInput = {};
+
+    if (dto.plannedDate !== undefined) {
+      data.plannedDate = dto.plannedDate ? new Date(dto.plannedDate) : null;
+    }
+
+    if (dto.responsibleWorkerId !== undefined) {
+      data.responsibleWorkerId = dto.responsibleWorkerId || null;
+    }
+
+    if (Object.keys(data).length === 0) {
+      throw new BadRequestException('No fields to update');
+    }
+
+    try {
+      return await this.prisma.workOrder.update({
+        where: { id },
+        data,
+        include: workOrderInclude,
+      });
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to update work order details',
+      );
     }
   }
 

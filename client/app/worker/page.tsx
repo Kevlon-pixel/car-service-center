@@ -10,6 +10,10 @@ import {
   logoutUser,
   restoreSession,
 } from "@features/auth/api/authApi";
+import { ServiceRequestsSection } from "./components/ServiceRequestsSection";
+import { WorkOrderCreateSection } from "./components/WorkOrderCreateSection";
+import { WorkOrderEditSection } from "./components/WorkOrderEditSection";
+import { WorkOrdersList } from "./components/WorkOrdersList";
 import styles from "../dashboard/dashboard.module.scss";
 
 export default function WorkerDashboardPage() {
@@ -17,6 +21,7 @@ export default function WorkerDashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -121,6 +126,17 @@ export default function WorkerDashboardPage() {
             </div>
           </div>
         </div>
+
+        <WorkOrderCreateSection
+          profile={profile}
+          onCreated={() => setRefreshKey((key) => key + 1)}
+        />
+        <WorkOrderEditSection
+          profile={profile}
+          onUpdated={() => setRefreshKey((key) => key + 1)}
+        />
+        <ServiceRequestsSection reloadKey={refreshKey} />
+        <WorkOrdersList reloadKey={refreshKey} />
       </div>
     </div>
   );

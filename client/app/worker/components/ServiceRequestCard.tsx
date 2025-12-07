@@ -1,0 +1,61 @@
+import {
+  REQUEST_STATUS_LABELS,
+  RequestStatus,
+  ServiceRequestWithClient,
+} from "@features/service-request/api/serviceRequestApi";
+import styles from "../../dashboard/dashboard.module.scss";
+
+interface ServiceRequestCardProps {
+  request: ServiceRequestWithClient;
+}
+
+const statusClassName: Record<RequestStatus, string> = {
+  NEW: "statusNew",
+  CONFIRMED: "statusConfirmed",
+  CANCELLED: "statusCancelled",
+  COMPLETED: "statusCompleted",
+};
+
+export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
+  const statusClass = styles[statusClassName[request.status]] ?? "";
+
+  return (
+    <div className={styles.requestCard}>
+      <div className={styles.requestHeader}>
+        <div>
+          <p className={styles.requestTitle}>
+            {request.vehicle.make} {request.vehicle.model}
+          </p>
+          <div className={styles.requestMeta}>
+            <span>{request.vehicle.licensePlate}</span>
+            {request.vehicle.year && <span>{request.vehicle.year}</span>}
+          </div>
+        </div>
+        <span className={`${styles.statusBadge} ${statusClass}`}>
+          {REQUEST_STATUS_LABELS[request.status]}
+        </span>
+      </div>
+
+      <div className={styles.requestMeta}>
+        <span>
+          {request.client.name} {request.client.surname}
+        </span>
+        <span>{request.client.phone}</span>
+        <span>{request.client.email}</span>
+      </div>
+
+      {request.comment && (
+        <p className={styles.requestComment}>{request.comment}</p>
+      )}
+
+      <div className={styles.requestMeta}>
+        {request.desiredDate && (
+          <span>
+            Preferred: {new Date(request.desiredDate).toLocaleString()}
+          </span>
+        )}
+        <span>Created: {new Date(request.createdAt).toLocaleString()}</span>
+      </div>
+    </div>
+  );
+}
