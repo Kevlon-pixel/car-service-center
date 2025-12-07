@@ -7,16 +7,13 @@ import {
   WorkOrderStatus,
   fetchWorkOrders,
 } from "@features/work-order/api/workOrderApi";
+import { Button } from "@shared/ui";
 import styles from "../../dashboard/dashboard.module.scss";
 
 const statusOptions: Array<{ value: WorkOrderStatus | "ALL"; label: string }> =
   [{ value: "ALL", label: "Все статусы" }, ...WORK_ORDER_STATUS_OPTIONS];
 
-type SortOption =
-  | "created-desc"
-  | "created-asc"
-  | "planned-desc"
-  | "planned-asc";
+type SortOption = "created-desc" | "created-asc";
 
 interface WorkOrdersListProps {
   reloadKey?: number;
@@ -61,24 +58,11 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
   }, [status, reloadKey]);
 
   const sortedOrders = useMemo(() => {
-    return [...orders].sort((a, b) => {
-      const getDate = (order: WorkOrder, key: "createdAt" | "plannedDate") => {
-        const value = order[key];
-        return value ? new Date(value as string).getTime() : 0;
-      };
-
-      switch (sort) {
-        case "created-asc":
-          return getDate(a, "createdAt") - getDate(b, "createdAt");
-        case "planned-desc":
-          return getDate(b, "plannedDate") - getDate(a, "plannedDate");
-        case "planned-asc":
-          return getDate(a, "plannedDate") - getDate(b, "plannedDate");
-        case "created-desc":
-        default:
-          return getDate(b, "createdAt") - getDate(a, "createdAt");
-      }
-    });
+    return [...orders].sort((a, b) =>
+      sort === "created-desc"
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
   }, [orders, sort]);
 
   const visibleOrders = sortedOrders.slice(0, visibleCount);
@@ -109,18 +93,19 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
           </label>
 
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка</span>
+            <span className={styles.label}>Сортировка по дате</span>
             <select
               className={styles.select}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">Новые сверху</option>
-              <option value="created-asc">Старые сверху</option>
-              <option value="planned-desc">По плановой дате (позже → раньше)</option>
-              <option value="planned-asc">По плановой дате (раньше → позже)</option>
+              <option value="created-desc">Сначала новые</option>
+              <option value="created-asc">Сначала старые</option>
             </select>
           </label>
+          <Button type="button" variant="ghost" disabled={loading} onClick={() => loadOrders(status)}>
+            Обновить
+          </Button>
         </div>
       </div>
 

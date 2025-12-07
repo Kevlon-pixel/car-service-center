@@ -28,11 +28,7 @@ interface WorkOrderEditSectionProps {
   onUpdated?: () => void;
 }
 
-type SortOption =
-  | "created-desc"
-  | "created-asc"
-  | "planned-desc"
-  | "planned-asc";
+type SortOption = "created-desc" | "created-asc";
 
 export function WorkOrderEditSection({
   profile,
@@ -120,29 +116,23 @@ export function WorkOrderEditSection({
     [orders, selectedId]
   );
 
-const formattedOrders = useMemo(() => {
-  return [...orders].sort((a, b) => {
-    const getDate = (order: WorkOrder, key: "createdAt" | "plannedDate") => {
-      const value = order[key];
-      return value ? new Date(value as string).getTime() : 0;
-      };
-
-      switch (sort) {
-        case "created-asc":
-          return getDate(a, "createdAt") - getDate(b, "createdAt");
-        case "planned-desc":
-          return getDate(b, "plannedDate") - getDate(a, "plannedDate");
-        case "planned-asc":
-          return getDate(a, "plannedDate") - getDate(b, "plannedDate");
-        case "created-desc":
-        default:
-          return getDate(b, "createdAt") - getDate(a, "createdAt");
-      }
-    });
-}, [orders, sort]);
+  const formattedOrders = useMemo(() => {
+    return [...orders].sort((a, b) =>
+      sort === "created-desc"
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+  }, [orders, sort]);
 
 function toLocalInput(dateString: string) {
   const date = new Date(dateString);
+  const offset = date.getTimezoneOffset();
+  const local = new Date(date.getTime() - offset * 60000);
+  return local.toISOString().slice(0, 16);
+}
+
+function nowLocalInput() {
+  const date = new Date();
   const offset = date.getTimezoneOffset();
   const local = new Date(date.getTime() - offset * 60000);
   return local.toISOString().slice(0, 16);
@@ -269,16 +259,14 @@ function toLocalInput(dateString: string) {
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка</span>
+            <span className={styles.label}>Сортировка по дате</span>
             <select
               className={styles.select}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">Новые сверху</option>
-              <option value="created-asc">Старые сверху</option>
-              <option value="planned-desc">Поздняя плановая дата сверху</option>
-              <option value="planned-asc">Ранняя плановая дата сверху</option>
+              <option value="created-desc">Сначала новые</option>
+              <option value="created-asc">Сначала старые</option>
             </select>
           </label>
           <Button
@@ -344,6 +332,7 @@ function toLocalInput(dateString: string) {
               <TextInput
                 label="Плановая дата"
                 type="datetime-local"
+                min={nowLocalInput()}
                 value={plannedDate}
                 onChange={(e) => setPlannedDate(e.target.value)}
               />

@@ -51,10 +51,10 @@ export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
       <div className={styles.requestMeta}>
         {request.desiredDate && (
           <span>
-            Preferred: {new Date(request.desiredDate).toLocaleString()}
+            Желаемая дата: {new Date(request.desiredDate).toLocaleString("ru-RU")}
           </span>
         )}
-        <span>Created: {new Date(request.createdAt).toLocaleString()}</span>
+        <span>Создана: {new Date(request.createdAt).toLocaleString("ru-RU")}</span>
       </div>
     </div>
   );

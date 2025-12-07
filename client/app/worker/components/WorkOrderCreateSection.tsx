@@ -48,11 +48,23 @@ export function WorkOrderCreateSection({
   profile,
   onCreated,
 }: WorkOrderCreateSectionProps) {
+  const nowInput = useMemo(
+    () => {
+      const date = new Date();
+      const offset = date.getTimezoneOffset();
+      const local = new Date(date.getTime() - offset * 60000);
+      return local.toISOString().slice(0, 16);
+    },
+    [],
+  );
   const [requests, setRequests] = useState<ServiceRequestWithClient[]>([]);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [parts, setParts] = useState<SparePartItem[]>([]);
   const [workers, setWorkers] = useState<UserSummary[]>([]);
+  const [sort, setSort] = useState<"created-desc" | "created-asc">(
+    "created-desc",
+  );
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -87,19 +99,21 @@ export function WorkOrderCreateSection({
         .filter((id): id is string => Boolean(id)),
     );
 
-    return requests
-      .filter(
-        (req) =>
-          !usedRequestIds.has(req.id) &&
-          req.status !== "CANCELLED" &&
-          req.status !== "COMPLETED",
-      )
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, 20);
-  }, [requests, workOrders]);
+    const filtered = requests.filter(
+      (req) =>
+        !usedRequestIds.has(req.id) &&
+        req.status !== "CANCELLED" &&
+        req.status !== "COMPLETED",
+    );
+
+    const sorted = [...filtered].sort((a, b) =>
+      sort === "created-desc"
+        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
+
+    return sorted.slice(0, 20);
+  }, [requests, workOrders, sort]);
 
   const loadData = async () => {
     setLoading(true);
@@ -277,9 +291,24 @@ export function WorkOrderCreateSection({
           <p className={styles.muted}>Создание заказ-наряда</p>
           <h3 style={{ margin: "4px 0 0" }}>На основе заявки</h3>
         </div>
-        <Button type="button" variant="ghost" onClick={loadData} disabled={loading}>
-          Обновить
-        </Button>
+        <div className={styles.filters}>
+          <label className={styles.selectLabel}>
+            <span className={styles.label}>Сортировка по дате</span>
+            <select
+              className={styles.select}
+              value={sort}
+              onChange={(event) =>
+                setSort(event.target.value as "created-desc" | "created-asc")
+              }
+            >
+              <option value="created-desc">Сначала новые</option>
+              <option value="created-asc">Сначала старые</option>
+            </select>
+          </label>
+          <Button type="button" variant="ghost" onClick={loadData} disabled={loading}>
+            Обновить
+          </Button>
+        </div>
       </div>
 
       {loadError && (
@@ -291,7 +320,8 @@ export function WorkOrderCreateSection({
         </div>
       )}
 
-      <form className={styles.stack} onSubmit={handleSubmit}>
+        <form className={styles.stack} onSubmit={handleSubmit}>
+
         <div className={styles.formGrid}>
           <label className={styles.selectLabel}>
             <span className={styles.label}>Заявка</span>
@@ -305,7 +335,7 @@ export function WorkOrderCreateSection({
             >
               <option value="">Не выбрано</option>
               {availableRequests.map((req) => {
-                const created = new Date(req.createdAt).toLocaleString();
+                const created = new Date(req.createdAt).toLocaleString("ru-RU");
                 return (
                   <option key={req.id} value={req.id}>
                     {req.vehicle.make} {req.vehicle.model} ({req.vehicle.licensePlate})
@@ -332,6 +362,7 @@ export function WorkOrderCreateSection({
               <TextInput
                 label="Плановая дата"
                 type="datetime-local"
+                min={nowInput}
                 value={form.plannedDate}
                 onChange={(e) =>
                   setForm((prev) => ({ ...prev, plannedDate: e.target.value }))

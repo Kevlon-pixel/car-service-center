@@ -11,7 +11,7 @@ import { ServiceRequestCard } from "./ServiceRequestCard";
 import styles from "../../dashboard/dashboard.module.scss";
 
 const statusOptions: Array<{ value: RequestStatus | "ALL"; label: string }> = [
-  { value: "ALL", label: "Не выбрано" },
+  { value: "ALL", label: "Все статусы" },
   ...REQUEST_STATUS_OPTIONS,
 ];
 

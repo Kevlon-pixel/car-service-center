@@ -9,6 +9,7 @@ import {
   fetchProfile,
   logoutUser,
   restoreSession,
+  ROLE_LABELS,
 } from "@features/auth/api/authApi";
 import { ServiceRequestsSection } from "./components/ServiceRequestsSection";
 import { WorkOrderCreateSection } from "./components/WorkOrderCreateSection";
@@ -90,12 +91,9 @@ export default function WorkerDashboardPage() {
             <h1 style={{ margin: "6px 0 0" }}>
               {profile.name} {profile.surname}
             </h1>
-            <p className={styles.muted}>
-              Роль: {profile.role}. Возможности управления заказами появятся
-              позже.
-            </p>
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+            <span className={styles.badge}>{ROLE_LABELS[profile.role]}</span>
             <Button onClick={handleLogout} variant="outline">
               Выйти
             </Button>

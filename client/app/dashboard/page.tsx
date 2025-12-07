@@ -9,6 +9,7 @@ import {
   fetchProfile,
   logoutUser,
   restoreSession,
+  ROLE_LABELS,
 } from "@features/auth/api/authApi";
 import {
   Vehicle,
@@ -178,7 +179,7 @@ export default function DashboardPage() {
             </h1>
           </div>
           <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-            <span className={styles.badge}>{profile.role}</span>
+            <span className={styles.badge}>{ROLE_LABELS[profile.role]}</span>
             <Button onClick={handleLogout} variant="outline">
               Выйти
             </Button>

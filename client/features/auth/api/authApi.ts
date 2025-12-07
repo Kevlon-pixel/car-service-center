@@ -31,6 +31,12 @@ export interface UserProfile {
   updatedAt: string;
 }
 
+export const ROLE_LABELS: Record<UserProfile['role'], string> = {
+  USER: 'Клиент',
+  WORKER: 'Сотрудник',
+  ADMIN: 'Администратор',
+};
+
 export async function registerUser(payload: RegisterPayload) {
   return httpClient<{ message: string }>(AUTH_ENDPOINTS.register, {
     method: 'POST',
