@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   ServiceInput,
@@ -8,12 +8,21 @@ import {
   fetchServices,
   updateService,
 } from "@features/service/api/serviceApi";
+import { clearFeedback, formatMinutes } from "@shared/lib/ui";
 import { Button, TextInput } from "@shared/ui";
 import styles from "../../dashboard/dashboard.module.scss";
 
 interface ServicesManageSectionProps {
   onChanged?: () => void;
 }
+
+const initialForm: ServiceInput = {
+  name: "",
+  description: "",
+  basePrice: 0,
+  durationMin: 0,
+  isActive: true,
+};
 
 export function ServicesManageSection({ onChanged }: ServicesManageSectionProps) {
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -24,51 +33,39 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<ServiceInput>({
-    name: "",
-    description: "",
-    basePrice: 0,
-    durationMin: 0,
-    isActive: true,
-  });
+  const [form, setForm] = useState<ServiceInput>(initialForm);
 
-  const load = async () => {
+  const isEditing = Boolean(editId);
+
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchServices(search.trim() || undefined, true);
       setServices(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Не удалось загрузить услуги",
-      );
+      setError(err instanceof Error ? err.message : "Не удалось загрузить услуги");
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const filteredServices = useMemo(() => {
-    const sorted = [...services].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-    );
-    return sorted;
-  }, [services]);
+  const sortedServices = useMemo(
+    () =>
+      [...services].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      ),
+    [services],
+  );
 
   const resetForm = () => {
     setEditId(null);
-    setForm({
-      name: "",
-      description: "",
-      basePrice: 0,
-      durationMin: 0,
-      isActive: true,
-    });
-    setActionError(null);
-    setSuccess(null);
+    setForm(initialForm);
+    clearFeedback(setActionError, setSuccess);
   };
 
   const startEdit = (service: ServiceItem) => {
@@ -77,18 +74,17 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
       name: service.name,
       description: service.description ?? "",
       basePrice: Number(service.basePrice),
-      durationMin: service.durationMin ?? 0,
+      durationMin: service.durationMin ?? undefined,
       isActive: service.isActive,
     });
-    setActionError(null);
-    setSuccess(null);
+    clearFeedback(setActionError, setSuccess);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
-    setActionError(null);
-    setSuccess(null);
+    clearFeedback(setActionError, setSuccess);
+
     try {
       if (editId) {
         const updated = await updateService(editId, form);
@@ -97,7 +93,7 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
       } else {
         const created = await createService(form);
         setServices((prev) => [...prev, created]);
-        setSuccess("Услуга добавлена.");
+        setSuccess("Услуга создана.");
       }
       onChanged?.();
       resetForm();
@@ -111,9 +107,8 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
   };
 
   const handleDelete = async (id: string) => {
-    setActionError(null);
-    setSuccess(null);
     setSaving(true);
+    clearFeedback(setActionError, setSuccess);
     try {
       await deleteService(id);
       setServices((prev) => prev.filter((s) => s.id !== id));
@@ -138,18 +133,10 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
           <p className={styles.muted}>Управление услугами</p>
           <h3 style={{ margin: "4px 0 0" }}>Услуги</h3>
         </div>
-        <div
-          className={styles.filters}
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-end",
-            flexWrap: "nowrap",
-          }}
-        >
+        <div className={styles.filters} style={{ gap: 12 }}>
           <div style={{ minWidth: 260, maxWidth: 360, width: "100%" }}>
             <TextInput
-              label="Поиск по имени"
+              label="Поиск по названию"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -198,7 +185,7 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
             }
           />
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Доступна</span>
+            <span className={styles.label}>Статус</span>
             <select
               className={styles.select}
               value={form.isActive ? "true" : "false"}
@@ -206,8 +193,8 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
                 setForm((prev) => ({ ...prev, isActive: event.target.value === "true" }))
               }
             >
-              <option value="true">Да</option>
-              <option value="false">Нет</option>
+              <option value="true">Активна</option>
+              <option value="false">Выключена</option>
             </select>
           </label>
         </div>
@@ -229,9 +216,13 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Button type="submit" disabled={saving || loading}>
-            {saving ? "Сохраняем..." : editId ? "Сохранить изменения" : "Добавить услугу"}
+            {saving
+              ? "Сохраняем..."
+              : isEditing
+                ? "Сохранить изменения"
+                : "Добавить услугу"}
           </Button>
-          {editId && (
+          {isEditing && (
             <Button type="button" variant="ghost" onClick={resetForm} disabled={saving}>
               Отмена
             </Button>
@@ -252,17 +243,17 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
               <th>Название</th>
               <th>Цена</th>
               <th>Длительность</th>
-              <th>Доступна</th>
+              <th>Статус</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {filteredServices.map((service) => (
+            {sortedServices.map((service) => (
               <tr key={service.id}>
                 <td>{service.name}</td>
                 <td>{service.basePrice}</td>
-                <td>{service.durationMin ?? "—"}</td>
-                <td>{service.isActive ? "Да" : "Нет"}</td>
+                <td>{formatMinutes(service.durationMin)}</td>
+                <td>{service.isActive ? "Активна" : "Выключена"}</td>
                 <td style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
@@ -281,7 +272,7 @@ export function ServicesManageSection({ onChanged }: ServicesManageSectionProps)
                 </td>
               </tr>
             ))}
-            {filteredServices.length === 0 && (
+            {sortedServices.length === 0 && (
               <tr>
                 <td colSpan={5} style={{ textAlign: "center", padding: 12 }}>
                   Услуги не найдены

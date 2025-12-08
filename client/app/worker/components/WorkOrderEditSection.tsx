@@ -15,6 +15,7 @@ import {
 } from "@features/spare-part/api/sparePartApi";
 import { fetchUsers, UserSummary } from "@features/user/api/userApi";
 import { UserProfile } from "@features/auth/api/authApi";
+import { formatMoney } from "@shared/lib/ui";
 import { Button, TextInput } from "@shared/ui";
 import styles from "../../dashboard/dashboard.module.scss";
 
@@ -84,7 +85,7 @@ export function WorkOrderEditSection({
       try {
         const allUsers = await fetchUsers();
         const workerUsers = allUsers.filter(
-          (u) => u.role === "WORKER" || u.role === "ADMIN"
+          (u) => u.role === "WORKER" || u.role === "ADMIN",
         );
         const withSelf = [
           ...workerUsers,
@@ -117,7 +118,7 @@ export function WorkOrderEditSection({
       setError(
         err instanceof Error
           ? err.message
-          : "Не удалось загрузить список заказ-нарядов"
+          : "Не удалось загрузить заказ-наряды и справочники",
       );
     } finally {
       setLoading(false);
@@ -130,16 +131,18 @@ export function WorkOrderEditSection({
 
   const selectedOrder = useMemo(
     () => orders.find((order) => order.id === selectedId),
-    [orders, selectedId]
+    [orders, selectedId],
   );
 
-  const formattedOrders = useMemo(() => {
-    return [...orders].sort((a, b) =>
-      sort === "created-desc"
-        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
-  }, [orders, sort]);
+  const formattedOrders = useMemo(
+    () =>
+      [...orders].sort((a, b) =>
+        sort === "created-desc"
+          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    [orders, sort],
+  );
 
   function formatInputValue(dateString: string) {
     // Keep wall time as stored (UTC string from API) without shifting timezone
@@ -158,9 +161,7 @@ export function WorkOrderEditSection({
       setStatus(selectedOrder.status);
       setResponsible(selectedOrder.responsibleWorker?.id ?? "");
       setPlannedDate(
-        selectedOrder.plannedDate
-          ? formatInputValue(selectedOrder.plannedDate)
-          : ""
+        selectedOrder.plannedDate ? formatInputValue(selectedOrder.plannedDate) : "",
       );
       setServiceRows(
         selectedOrder.services.map((row) => ({
@@ -202,11 +203,9 @@ export function WorkOrderEditSection({
     if (!selectedOrder) return;
     setStatus(selectedOrder.status);
     setResponsible(selectedOrder.responsibleWorker?.id ?? "");
-      setPlannedDate(
-        selectedOrder.plannedDate
-          ? formatInputValue(selectedOrder.plannedDate)
-          : ""
-      );
+    setPlannedDate(
+      selectedOrder.plannedDate ? formatInputValue(selectedOrder.plannedDate) : "",
+    );
     setServiceRows(
       selectedOrder.services.map((row) => ({
         id: row.id,
@@ -304,30 +303,25 @@ export function WorkOrderEditSection({
 
       const updated = await updateWorkOrder(selectedOrder.id, payload);
       replaceOrder(updated);
-      setSuccess("Заказ-наряд сохранен.");
+      setSuccess("Изменения сохранены.");
       onUpdated?.();
     } catch (err) {
       setActionError(
         err instanceof Error
           ? err.message
-          : "Не удалось сохранить заказ-наряд"
+          : "Не удалось сохранить заказ-наряд",
       );
     } finally {
       setSaving(false);
     }
   };
 
-  const formatMoney = (value?: number) =>
-    value === undefined || Number.isNaN(value) ? "--" : value.toFixed(2);
-
   return (
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>Управление заказ-нарядами</p>
-          <h3 style={{ margin: "4px 0 0" }}>
-            Редактирование существующих заказ-нарядов
-          </h3>
+          <p className={styles.muted}>Работа с текущими заказ-нарядами</p>
+          <h3 style={{ margin: "4px 0 0" }}>Редактирование заказ-наряда</h3>
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
@@ -337,16 +331,11 @@ export function WorkOrderEditSection({
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">Сначала новые</option>
-              <option value="created-asc">Сначала старые</option>
+              <option value="created-desc">По дате ↓</option>
+              <option value="created-asc">По дате ↑</option>
             </select>
           </label>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={loadData}
-            disabled={loading}
-          >
+          <Button type="button" variant="ghost" onClick={loadData} disabled={loading}>
             Обновить
           </Button>
         </div>
@@ -373,8 +362,7 @@ export function WorkOrderEditSection({
             {formattedOrders.map((order) => (
               <option key={order.id} value={order.id}>
                 {order.number} — {order.vehicle.make} {order.vehicle.model} (
-                {order.vehicle.licensePlate}) —{" "}
-                {WORK_ORDER_STATUS_LABELS[order.status]} —{" "}
+                {order.vehicle.licensePlate}) — {WORK_ORDER_STATUS_LABELS[order.status]} —{" "}
                 {new Date(order.createdAt).toLocaleString()}
               </option>
             ))}
@@ -389,9 +377,7 @@ export function WorkOrderEditSection({
                 <select
                   className={styles.select}
                   value={status}
-                  onChange={(event) =>
-                    setStatus(event.target.value as WorkOrderStatus)
-                  }
+                  onChange={(event) => setStatus(event.target.value as WorkOrderStatus)}
                 >
                   {WORK_ORDER_STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -402,7 +388,7 @@ export function WorkOrderEditSection({
               </label>
 
               <TextInput
-                label="Планируемая дата"
+                label="Плановая дата и время"
                 type="datetime-local"
                 min={nowLocalInput()}
                 value={plannedDate}
@@ -410,13 +396,13 @@ export function WorkOrderEditSection({
               />
 
               <label className={styles.selectLabel}>
-                <span className={styles.label}>Ответственный</span>
+                <span className={styles.label}>Ответственный мастер</span>
                 <select
                   className={styles.select}
                   value={responsible}
                   onChange={(event) => setResponsible(event.target.value)}
                 >
-                  <option value="">Без ответственного</option>
+                  <option value="">Не назначен</option>
                   <option value={profile.id}>
                     Я ({profile.name} {profile.surname})
                   </option>
@@ -451,7 +437,7 @@ export function WorkOrderEditSection({
                 </select>
               </label>
               <TextInput
-                label="Кол-во"
+                label="Количество"
                 type="number"
                 min="1"
                 value={serviceDraft.quantity}
@@ -487,7 +473,7 @@ export function WorkOrderEditSection({
                   <tbody>
                     {serviceRows.map((row) => {
                       const service = services.find(
-                        (item) => item.id === row.serviceId
+                        (item) => item.id === row.serviceId,
                       );
                       const unitPrice =
                         row.unitPrice ??
@@ -541,7 +527,7 @@ export function WorkOrderEditSection({
                 </select>
               </label>
               <TextInput
-                label="Кол-во"
+                label="Количество"
                 type="number"
                 min="1"
                 value={partDraft.quantity}
@@ -583,7 +569,7 @@ export function WorkOrderEditSection({
                       return (
                         <tr key={row.id}>
                           <td>{row.name ?? part?.name ?? row.partId}</td>
-                          <td>{row.article ?? part?.article ?? "--"}</td>
+                          <td>{row.article ?? part?.article ?? "—"}</td>
                           <td>{row.quantity}</td>
                           <td>{formatMoney(unitPrice)}</td>
                           <td>{formatMoney(total)}</td>
@@ -613,10 +599,10 @@ export function WorkOrderEditSection({
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Button type="submit" disabled={loading || saving}>
-                {saving ? "Сохраняем..." : "Сохранить изменения"}
+                {saving ? "Сохраняем..." : "Сохранить черновик"}
               </Button>
               <Button type="button" variant="ghost" onClick={resetDraft}>
-                Сбросить
+                Сбросить изменения
               </Button>
             </div>
           </form>

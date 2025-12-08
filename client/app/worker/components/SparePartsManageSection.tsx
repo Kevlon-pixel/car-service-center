@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   SparePartInput,
@@ -8,12 +8,22 @@ import {
   fetchSpareParts,
   updateSparePart,
 } from "@features/spare-part/api/sparePartApi";
+import { clearFeedback } from "@shared/lib/ui";
 import { Button, TextInput } from "@shared/ui";
 import styles from "../../dashboard/dashboard.module.scss";
 
 interface SparePartsManageSectionProps {
   onChanged?: () => void;
 }
+
+const initialForm: SparePartInput = {
+  name: "",
+  article: "",
+  unit: "",
+  price: 0,
+  stockQuantity: 0,
+  isActive: true,
+};
 
 export function SparePartsManageSection({ onChanged }: SparePartsManageSectionProps) {
   const [parts, setParts] = useState<SparePartItem[]>([]);
@@ -24,53 +34,39 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState<SparePartInput>({
-    name: "",
-    article: "",
-    unit: "",
-    price: 0,
-    stockQuantity: 0,
-    isActive: true,
-  });
+  const [form, setForm] = useState<SparePartInput>(initialForm);
 
-  const load = async () => {
+  const isEditing = Boolean(editId);
+
+  const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await fetchSpareParts(search.trim() || undefined, true);
       setParts(data);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Не удалось загрузить запчасти",
-      );
+      setError(err instanceof Error ? err.message : "Не удалось загрузить запчасти");
     } finally {
       setLoading(false);
     }
-  };
+  }, [search]);
 
   useEffect(() => {
     load();
-  }, []);
+  }, [load]);
 
-  const filteredParts = useMemo(() => {
-    const sorted = [...parts].sort((a, b) =>
-      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-    );
-    return sorted;
-  }, [parts]);
+  const sortedParts = useMemo(
+    () =>
+      [...parts].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      ),
+    [parts],
+  );
 
   const resetForm = () => {
     setEditId(null);
-    setForm({
-      name: "",
-      article: "",
-      unit: "",
-      price: 0,
-      stockQuantity: 0,
-      isActive: true,
-    });
-    setActionError(null);
-    setSuccess(null);
+    setForm(initialForm);
+    clearFeedback(setActionError, setSuccess);
   };
 
   const startEdit = (part: SparePartItem) => {
@@ -83,15 +79,13 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
       stockQuantity: part.stockQuantity,
       isActive: part.isActive,
     });
-    setActionError(null);
-    setSuccess(null);
+    clearFeedback(setActionError, setSuccess);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setSaving(true);
-    setActionError(null);
-    setSuccess(null);
+    clearFeedback(setActionError, setSuccess);
     try {
       if (editId) {
         const updated = await updateSparePart(editId, form);
@@ -114,9 +108,8 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
   };
 
   const handleDelete = async (id: string) => {
-    setActionError(null);
-    setSuccess(null);
     setSaving(true);
+    clearFeedback(setActionError, setSuccess);
     try {
       await deleteSparePart(id);
       setParts((prev) => prev.filter((p) => p.id !== id));
@@ -141,18 +134,10 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
           <p className={styles.muted}>Управление запчастями</p>
           <h3 style={{ margin: "4px 0 0" }}>Запчасти</h3>
         </div>
-        <div
-          className={styles.filters}
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "flex-end",
-            flexWrap: "nowrap",
-          }}
-        >
+        <div className={styles.filters} style={{ gap: 12 }}>
           <div style={{ minWidth: 260, maxWidth: 360, width: "100%" }}>
             <TextInput
-              label="Поиск по имени или артикулу"
+              label="Поиск по названию или артикулу"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               onKeyDown={(e) => {
@@ -201,7 +186,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
             }
           />
           <TextInput
-            label="Остаток на складе"
+            label="Кол-во на складе"
             type="number"
             min="0"
             required
@@ -211,7 +196,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
             }
           />
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Доступна</span>
+            <span className={styles.label}>Статус</span>
             <select
               className={styles.select}
               value={form.isActive ? "true" : "false"}
@@ -219,8 +204,8 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
                 setForm((prev) => ({ ...prev, isActive: event.target.value === "true" }))
               }
             >
-              <option value="true">Да</option>
-              <option value="false">Нет</option>
+              <option value="true">Активна</option>
+              <option value="false">Выключена</option>
             </select>
           </label>
         </div>
@@ -234,9 +219,13 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
 
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           <Button type="submit" disabled={saving || loading}>
-            {saving ? "Сохраняем..." : editId ? "Сохранить изменения" : "Добавить запчасть"}
+            {saving
+              ? "Сохраняем..."
+              : isEditing
+                ? "Сохранить изменения"
+                : "Добавить запчасть"}
           </Button>
-          {editId && (
+          {isEditing && (
             <Button type="button" variant="ghost" onClick={resetForm} disabled={saving}>
               Отмена
             </Button>
@@ -258,20 +247,20 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
               <th>Артикул</th>
               <th>Ед.</th>
               <th>Цена</th>
-              <th>Остаток</th>
-              <th>Доступна</th>
+              <th>Кол-во</th>
+              <th>Статус</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {filteredParts.map((part) => (
+            {sortedParts.map((part) => (
               <tr key={part.id}>
                 <td>{part.name}</td>
                 <td>{part.article}</td>
                 <td>{part.unit}</td>
                 <td>{part.price}</td>
                 <td>{part.stockQuantity}</td>
-                <td>{part.isActive ? "Да" : "Нет"}</td>
+                <td>{part.isActive ? "Активна" : "Выключена"}</td>
                 <td style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
@@ -290,7 +279,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
                 </td>
               </tr>
             ))}
-            {filteredParts.length === 0 && (
+            {sortedParts.length === 0 && (
               <tr>
                 <td colSpan={7} style={{ textAlign: "center", padding: 12 }}>
                   Запчасти не найдены

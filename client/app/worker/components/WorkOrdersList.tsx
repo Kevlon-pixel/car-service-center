@@ -10,8 +10,10 @@ import {
 import { Button } from "@shared/ui";
 import styles from "../../dashboard/dashboard.module.scss";
 
-const statusOptions: Array<{ value: WorkOrderStatus | "ALL"; label: string }> =
-  [{ value: "ALL", label: "Все статусы" }, ...WORK_ORDER_STATUS_OPTIONS];
+const statusOptions: Array<{ value: WorkOrderStatus | "ALL"; label: string }> = [
+  { value: "ALL", label: "Все статусы" },
+  ...WORK_ORDER_STATUS_OPTIONS,
+];
 
 type SortOption = "created-desc" | "created-asc";
 
@@ -57,13 +59,15 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
     loadOrders(status);
   }, [status, reloadKey]);
 
-  const sortedOrders = useMemo(() => {
-    return [...orders].sort((a, b) =>
-      sort === "created-desc"
-        ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-    );
-  }, [orders, sort]);
+  const sortedOrders = useMemo(
+    () =>
+      [...orders].sort((a, b) =>
+        sort === "created-desc"
+          ? new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          : new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      ),
+    [orders, sort],
+  );
 
   const visibleOrders = sortedOrders.slice(0, visibleCount);
 
@@ -71,7 +75,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>Список заказ-нарядов</p>
+          <p className={styles.muted}>История заказ-нарядов</p>
           <h3 style={{ margin: "4px 0 0" }}>Все работы</h3>
         </div>
         <div className={styles.filters}>
@@ -93,17 +97,22 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
           </label>
 
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка по дате</span>
+            <span className={styles.label}>Сортировка</span>
             <select
               className={styles.select}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">Сначала новые</option>
-              <option value="created-asc">Сначала старые</option>
+              <option value="created-desc">По дате ↓</option>
+              <option value="created-asc">По дате ↑</option>
             </select>
           </label>
-          <Button type="button" variant="ghost" disabled={loading} onClick={() => loadOrders(status)}>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={loading}
+            onClick={() => loadOrders(status)}
+          >
             Обновить
           </Button>
         </div>
@@ -125,7 +134,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
       {loading ? (
         <div className={styles.muted}>Загружаем заказ-наряды…</div>
       ) : visibleOrders.length === 0 ? (
-        <div className={styles.muted}>Нет заказ-нарядов по выбранным условиям.</div>
+        <div className={styles.muted}>Заказ-наряды не найдены.</div>
       ) : (
         <div className={styles.requestList}>
           {visibleOrders.map((order) => (
@@ -133,12 +142,12 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
               <div className={styles.requestHeader}>
                 <div>
                   <p className={styles.requestTitle}>
-                    {order.number} · {order.vehicle.make} {order.vehicle.model} (
+                    {order.number} — {order.vehicle.make} {order.vehicle.model} (
                     {order.vehicle.licensePlate})
                   </p>
                   <div className={styles.requestMeta}>
                     <span>
-                      Клиент: {order.client.name} {order.client.surname} ·{" "}
+                      Клиент: {order.client.name} {order.client.surname} —{" "}
                       {order.client.phone}
                     </span>
                     {order.responsibleWorker && (
@@ -155,7 +164,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
                     )}
                     {order.plannedDate && (
                       <span>
-                        План: {new Date(order.plannedDate).toLocaleString()}
+                        Плановая дата: {new Date(order.plannedDate).toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -174,7 +183,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
                 {order.completedDate && (
                   <span>Завершен: {new Date(order.completedDate).toLocaleString()}</span>
                 )}
-                <span>Труд: {order.totalLaborCost}</span>
+                <span>Работы: {order.totalLaborCost}</span>
                 <span>Запчасти: {order.totalPartsCost}</span>
                 <span>Итого: {order.totalCost}</span>
               </div>
@@ -185,7 +194,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
                   <table className={styles.simpleTable}>
                     <thead>
                       <tr>
-                        <th>Название</th>
+                        <th>Наименование</th>
                         <th>Кол-во</th>
                         <th>Цена</th>
                         <th>Сумма</th>
@@ -211,7 +220,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
                   <table className={styles.simpleTable}>
                     <thead>
                       <tr>
-                        <th>Название</th>
+                        <th>Наименование</th>
                         <th>Артикул</th>
                         <th>Кол-во</th>
                         <th>Цена</th>
@@ -246,7 +255,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
               setVisibleCount((prev) => Math.min(prev + 5, sortedOrders.length))
             }
           >
-            Показать еще
+            Показать ещё
           </button>
         </div>
       )}

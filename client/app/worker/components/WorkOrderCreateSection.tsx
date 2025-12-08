@@ -48,15 +48,13 @@ export function WorkOrderCreateSection({
   profile,
   onCreated,
 }: WorkOrderCreateSectionProps) {
-  const nowInput = useMemo(
-    () => {
-      const date = new Date();
-      const offset = date.getTimezoneOffset();
-      const local = new Date(date.getTime() - offset * 60000);
-      return local.toISOString().slice(0, 16);
-    },
-    [],
-  );
+  const nowInput = useMemo(() => {
+    const date = new Date();
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  }, []);
+
   const [requests, setRequests] = useState<ServiceRequestWithClient[]>([]);
   const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -164,7 +162,9 @@ export function WorkOrderCreateSection({
       }
     } catch (err) {
       setLoadError(
-        err instanceof Error ? err.message : "Не удалось загрузить данные",
+        err instanceof Error
+          ? err.message
+          : "Не удалось загрузить данные для создания заказ-наряда",
       );
     } finally {
       setLoading(false);
@@ -185,6 +185,8 @@ export function WorkOrderCreateSection({
     setPartRows([]);
     setServiceDraft({ serviceId: "", quantity: "1" });
     setPartDraft({ partId: "", quantity: "1" });
+    setSuccess(null);
+    setSubmitError(null);
   };
 
   const handleAddServiceRow = () => {
@@ -216,7 +218,7 @@ export function WorkOrderCreateSection({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!form.requestId) {
-      setSubmitError("Сначала выберите заявку");
+      setSubmitError("Выберите заявку, чтобы создать заказ-наряд");
       return;
     }
 
@@ -263,7 +265,7 @@ export function WorkOrderCreateSection({
       await updateServiceRequestStatus(form.requestId, "CONFIRMED");
 
       setSuccess(
-        `Заказ-наряд ${currentOrder.number} создан (${WORK_ORDER_STATUS_LABELS[currentOrder.status]}).`,
+        `Заказ-наряд ${currentOrder.number} сохранен (${WORK_ORDER_STATUS_LABELS[currentOrder.status]}).`,
       );
       resetForm();
       loadData();
@@ -289,11 +291,11 @@ export function WorkOrderCreateSection({
       <div className={styles.sectionHeading}>
         <div>
           <p className={styles.muted}>Создание заказ-наряда</p>
-          <h3 style={{ margin: "4px 0 0" }}>На основе заявки</h3>
+          <h3 style={{ margin: "4px 0 0" }}>Новый заказ-наряд</h3>
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка по дате</span>
+            <span className={styles.label}>Сортировка заявок</span>
             <select
               className={styles.select}
               value={sort}
@@ -320,8 +322,7 @@ export function WorkOrderCreateSection({
         </div>
       )}
 
-        <form className={styles.stack} onSubmit={handleSubmit}>
-
+      <form className={styles.stack} onSubmit={handleSubmit}>
         <div className={styles.formGrid}>
           <label className={styles.selectLabel}>
             <span className={styles.label}>Заявка</span>
@@ -333,15 +334,15 @@ export function WorkOrderCreateSection({
                 setForm((prev) => ({ ...prev, requestId: event.target.value }))
               }
             >
-              <option value="">Не выбрано</option>
+              <option value="">Выберите заявку</option>
               {availableRequests.map((req) => {
                 const created = new Date(req.createdAt).toLocaleString("ru-RU");
                 return (
                   <option key={req.id} value={req.id}>
                     {req.vehicle.make} {req.vehicle.model} ({req.vehicle.licensePlate})
-                    {" · "}
+                    {" — "}
                     {REQUEST_STATUS_LABELS[req.status as RequestStatus]}
-                    {" · "}
+                    {" — "}
                     {created}
                   </option>
                 );
@@ -352,7 +353,7 @@ export function WorkOrderCreateSection({
 
         {!form.requestId && (
           <span className={styles.note}>
-            Сначала выберите заявку, чтобы заполнить заказ-наряд.
+            Выберите заявку, чтобы продолжить заполнение заказ-наряда.
           </span>
         )}
 
@@ -360,7 +361,7 @@ export function WorkOrderCreateSection({
           <>
             <div className={styles.formGrid}>
               <TextInput
-                label="Плановая дата"
+                label="Плановая дата и время"
                 type="datetime-local"
                 min={nowInput}
                 value={form.plannedDate}
@@ -370,7 +371,7 @@ export function WorkOrderCreateSection({
               />
 
               <label className={styles.selectLabel}>
-                <span className={styles.label}>Ответственный</span>
+                <span className={styles.label}>Ответственный мастер</span>
                 <select
                   className={styles.select}
                   value={form.responsibleWorkerId}
@@ -389,7 +390,7 @@ export function WorkOrderCreateSection({
                       {worker.name} {worker.surname}
                     </option>
                   ))}
-                  <option value="">Без назначения</option>
+                  <option value="">Не назначать</option>
                 </select>
               </label>
             </div>
@@ -416,7 +417,7 @@ export function WorkOrderCreateSection({
                 </select>
               </label>
               <TextInput
-                label="Кол-во"
+                label="Количество"
                 type="number"
                 min="1"
                 value={serviceDraft.quantity}
@@ -434,7 +435,7 @@ export function WorkOrderCreateSection({
                 <table className={styles.simpleTable}>
                   <thead>
                     <tr>
-                      <th>Услуга</th>
+                      <th>Наименование</th>
                       <th>Кол-во</th>
                       <th></th>
                     </tr>
@@ -489,7 +490,7 @@ export function WorkOrderCreateSection({
                 </select>
               </label>
               <TextInput
-                label="Кол-во"
+                label="Количество"
                 type="number"
                 min="1"
                 value={partDraft.quantity}
@@ -507,7 +508,7 @@ export function WorkOrderCreateSection({
                 <table className={styles.simpleTable}>
                   <thead>
                     <tr>
-                      <th>Запчасть</th>
+                      <th>Наименование</th>
                       <th>Кол-во</th>
                       <th></th>
                     </tr>
@@ -550,19 +551,19 @@ export function WorkOrderCreateSection({
 
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
               <Button type="submit" disabled={submitting || loading}>
-                {submitting ? "Создаем…" : "Создать заказ-наряд"}
+                {submitting ? "Создаем..." : "Создать заказ-наряд"}
               </Button>
               <Button type="button" variant="ghost" onClick={resetForm}>
-                Сбросить
+                Очистить
               </Button>
               {availableRequests.length === 0 && (
                 <span className={styles.note}>
-                  Нет доступных заявок для создания заказ-наряда.
+                  Нет заявок без заказа-наряда — проверьте статус заявок.
                 </span>
               )}
               {selectedRequest && (
                 <span className={styles.note}>
-                  Клиент: {selectedRequest.client.name} {selectedRequest.client.surname} ·{" "}
+                  Клиент: {selectedRequest.client.name} {selectedRequest.client.surname} —{" "}
                   {selectedRequest.client.phone}
                 </span>
               )}
