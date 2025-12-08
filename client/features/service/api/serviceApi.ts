@@ -9,6 +9,40 @@ export interface ServiceItem {
   durationMin?: number | null;
 }
 
-export async function fetchServices() {
-  return apiRequest<ServiceItem[]>(SERVICE_ENDPOINTS.all, { useAuth: false });
+export async function fetchServices(search?: string, includeInactive?: boolean) {
+  return apiRequest<ServiceItem[]>(SERVICE_ENDPOINTS.all, {
+    params: {
+      ...(search ? { search } : {}),
+      ...(includeInactive ? { includeInactive: true } : {}),
+    },
+    useAuth: !!includeInactive ? true : false,
+  });
+}
+
+export interface ServiceInput {
+  name: string;
+  description?: string;
+  basePrice: number;
+  durationMin?: number;
+  isActive?: boolean;
+}
+
+export async function createService(payload: ServiceInput) {
+  return apiRequest<ServiceItem>(SERVICE_ENDPOINTS.all, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateService(id: string, payload: Partial<ServiceInput>) {
+  return apiRequest<ServiceItem>(`${SERVICE_ENDPOINTS.all}/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteService(id: string) {
+  return apiRequest<void>(`${SERVICE_ENDPOINTS.all}/${id}`, {
+    method: "DELETE",
+  });
 }

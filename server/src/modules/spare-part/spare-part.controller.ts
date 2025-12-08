@@ -26,8 +26,12 @@ export class SparePartController {
     summary: 'Get available spare parts (filter by name or article)',
   })
   @Get()
-  async getSpareParts(@Query('search') search?: string) {
-    return this.sparePartService.getSpareParts(search);
+  async getSpareParts(
+    @Query('search') search?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    const showInactive = includeInactive === 'true';
+    return this.sparePartService.getSpareParts(search, showInactive);
   }
 
   @ApiOperation({ summary: 'Create spare part (Admin and Worker)' })

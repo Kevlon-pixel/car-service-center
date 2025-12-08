@@ -15,6 +15,8 @@ import { ServiceRequestsSection } from "./components/ServiceRequestsSection";
 import { WorkOrderCreateSection } from "./components/WorkOrderCreateSection";
 import { WorkOrderEditSection } from "./components/WorkOrderEditSection";
 import { WorkOrdersList } from "./components/WorkOrdersList";
+import { ServicesManageSection } from "./components/ServicesManageSection";
+import { SparePartsManageSection } from "./components/SparePartsManageSection";
 import styles from "../dashboard/dashboard.module.scss";
 
 export default function WorkerDashboardPage() {
@@ -23,9 +25,9 @@ export default function WorkerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [activeSection, setActiveSection] = useState<"create" | "edit">(
-    "create",
-  );
+  const [activeSection, setActiveSection] = useState<
+    "create" | "edit" | "services" | "parts"
+  >("create");
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -131,26 +133,58 @@ export default function WorkerDashboardPage() {
           >
             Редактирование заказ-наряда
           </Button>
+          <Button
+            type="button"
+            variant={activeSection === "services" ? "primary" : "outline"}
+            onClick={() => setActiveSection("services")}
+          >
+            Услуги
+          </Button>
+          <Button
+            type="button"
+            variant={activeSection === "parts" ? "primary" : "outline"}
+            onClick={() => setActiveSection("parts")}
+          >
+            Запчасти
+          </Button>
         </div>
 
-        {activeSection === "create" ? (
-          <>
-            <WorkOrderCreateSection
-              profile={profile}
-              onCreated={() => setRefreshKey((key) => key + 1)}
-            />
-            <ServiceRequestsSection reloadKey={refreshKey} />
-            <WorkOrdersList reloadKey={refreshKey} />
-          </>
-        ) : (
-          <>
-            <WorkOrderEditSection
-              profile={profile}
-              onUpdated={() => setRefreshKey((key) => key + 1)}
-            />
-            <WorkOrdersList reloadKey={refreshKey} />
-          </>
-        )}
+        {(() => {
+          switch (activeSection) {
+            case "create":
+              return (
+                <>
+                  <WorkOrderCreateSection
+                    profile={profile}
+                    onCreated={() => setRefreshKey((key) => key + 1)}
+                  />
+                  <ServiceRequestsSection reloadKey={refreshKey} />
+                </>
+              );
+            case "edit":
+              return (
+                <>
+                  <WorkOrderEditSection
+                    profile={profile}
+                    onUpdated={() => setRefreshKey((key) => key + 1)}
+                  />
+                  <WorkOrdersList reloadKey={refreshKey} />
+                </>
+              );
+            case "services":
+              return (
+                <ServicesManageSection onChanged={() => setRefreshKey((key) => key + 1)} />
+              );
+            case "parts":
+              return (
+                <SparePartsManageSection
+                  onChanged={() => setRefreshKey((key) => key + 1)}
+                />
+              );
+            default:
+              return null;
+          }
+        })()}
       </div>
     </div>
   );

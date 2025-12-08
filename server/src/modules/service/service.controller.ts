@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { SystemRole } from '@prisma/client';
@@ -23,8 +24,12 @@ export class ServiceController {
 
   @ApiOperation({ summary: 'Get available services (public)' })
   @Get()
-  async getServices() {
-    return this.servicesService.getAvailableServices();
+  async getServices(
+    @Query('search') search?: string,
+    @Query('includeInactive') includeInactive?: string,
+  ) {
+    const showInactive = includeInactive === 'true';
+    return this.servicesService.getAvailableServices(search, showInactive);
   }
 
   @ApiOperation({ summary: 'Create service (Admin and Worker)' })

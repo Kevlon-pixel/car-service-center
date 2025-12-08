@@ -14,9 +14,14 @@ import { UpdateSparePartDto } from './dto/update-spare-part.dto';
 export class SparePartService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getSpareParts(search?: string): Promise<SparePart[]> {
+  async getSpareParts(
+    search?: string,
+    includeInactive = false,
+  ): Promise<SparePart[]> {
     try {
-      const where: Prisma.SparePartWhereInput = { isActive: true };
+      const where: Prisma.SparePartWhereInput = includeInactive
+        ? {}
+        : { isActive: true };
 
       const searchTerm = search?.trim();
       if (searchTerm) {
@@ -28,7 +33,7 @@ export class SparePartService {
 
       return await this.prisma.sparePart.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy: { name: 'asc' },
       });
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch spare parts');

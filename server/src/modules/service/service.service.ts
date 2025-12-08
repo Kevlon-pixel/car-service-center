@@ -13,11 +13,24 @@ import { UpdateServiceDto } from './dto/update-service.dto';
 export class ServiceService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getAvailableServices(): Promise<Service[]> {
+  async getAvailableServices(
+    search?: string,
+    includeInactive = false,
+  ): Promise<Service[]> {
     try {
       return await this.prisma.service.findMany({
-        where: { isActive: true },
-        orderBy: { createdAt: 'desc' },
+        where: {
+          ...(includeInactive ? {} : { isActive: true }),
+          ...(search
+            ? {
+                name: {
+                  contains: search,
+                  mode: 'insensitive',
+                },
+              }
+            : {}),
+        },
+        orderBy: { name: 'asc' },
       });
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch services');
