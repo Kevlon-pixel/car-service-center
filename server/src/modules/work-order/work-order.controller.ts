@@ -19,8 +19,8 @@ import { AddWorkOrderPartDto } from './dto/add-work-order-part.dto';
 import { AddWorkOrderServiceDto } from './dto/add-work-order-service.dto';
 import { CreateWorkOrderDto } from './dto/create-work-order.dto';
 import { UpdateWorkOrderStatusDto } from './dto/update-work-order-status.dto';
-import { UpdateWorkOrderDetailsDto } from './dto/update-work-order-details.dto';
 import { WorkOrderFiltersDto } from './dto/work-order-filters.dto';
+import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 import { WorkOrderService } from './work-order.service';
 
 @ApiBearerAuth('access-token')
@@ -67,11 +67,8 @@ export class WorkOrderController {
   @UseGuards(RolesGuard)
   @Roles(SystemRole.ADMIN, SystemRole.WORKER)
   @Patch(':id')
-  async updateDetails(
-    @Param('id') id: string,
-    @Body() dto: UpdateWorkOrderDetailsDto,
-  ) {
-    return this.workOrderService.updateDetails(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateWorkOrderDto) {
+    return this.workOrderService.updateWorkOrder(id, dto);
   }
 
   @ApiOperation({

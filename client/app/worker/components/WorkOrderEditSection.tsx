@@ -5,13 +5,8 @@ import {
   WORK_ORDER_STATUS_LABELS,
   WorkOrder,
   WorkOrderStatus,
-  addWorkOrderPart,
-  addWorkOrderService,
-  deleteWorkOrderPart,
-  deleteWorkOrderService,
   fetchWorkOrders,
-  updateWorkOrderDetails,
-  updateWorkOrderStatus,
+  updateWorkOrder,
 } from "@features/work-order/api/workOrderApi";
 import { fetchServices, ServiceItem } from "@features/service/api/serviceApi";
 import {
@@ -30,6 +25,23 @@ interface WorkOrderEditSectionProps {
 
 type SortOption = "created-desc" | "created-asc";
 
+interface ServiceDraftRow {
+  id: string;
+  serviceId: string;
+  quantity: number;
+  name?: string;
+  unitPrice?: number;
+}
+
+interface PartDraftRow {
+  id: string;
+  partId: string;
+  quantity: number;
+  name?: string;
+  article?: string;
+  unitPrice?: number;
+}
+
 export function WorkOrderEditSection({
   profile,
   onUpdated,
@@ -42,6 +54,8 @@ export function WorkOrderEditSection({
   const [status, setStatus] = useState<WorkOrderStatus | "">("");
   const [plannedDate, setPlannedDate] = useState<string>("");
   const [responsible, setResponsible] = useState<string>("");
+  const [serviceRows, setServiceRows] = useState<ServiceDraftRow[]>([]);
+  const [partRows, setPartRows] = useState<PartDraftRow[]>([]);
   const [serviceDraft, setServiceDraft] = useState({
     serviceId: "",
     quantity: "1",
@@ -49,6 +63,7 @@ export function WorkOrderEditSection({
   const [partDraft, setPartDraft] = useState({ partId: "", quantity: "1" });
   const [sort, setSort] = useState<SortOption>("created-desc");
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -100,7 +115,9 @@ export function WorkOrderEditSection({
       }
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Не удалось загрузить заказ-наряды"
+        err instanceof Error
+          ? err.message
+          : "Не удалось загрузить список заказ-нарядов"
       );
     } finally {
       setLoading(false);
@@ -124,19 +141,17 @@ export function WorkOrderEditSection({
     );
   }, [orders, sort]);
 
-function toLocalInput(dateString: string) {
-  const date = new Date(dateString);
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 16);
-}
+  function formatInputValue(dateString: string) {
+    // Keep wall time as stored (UTC string from API) without shifting timezone
+    return dateString.slice(0, 16);
+  }
 
-function nowLocalInput() {
-  const date = new Date();
-  const offset = date.getTimezoneOffset();
-  const local = new Date(date.getTime() - offset * 60000);
-  return local.toISOString().slice(0, 16);
-}
+  function nowLocalInput() {
+    const date = new Date();
+    const offset = date.getTimezoneOffset();
+    const local = new Date(date.getTime() - offset * 60000);
+    return local.toISOString().slice(0, 16);
+  }
 
   useEffect(() => {
     if (selectedOrder) {
@@ -144,9 +159,38 @@ function nowLocalInput() {
       setResponsible(selectedOrder.responsibleWorker?.id ?? "");
       setPlannedDate(
         selectedOrder.plannedDate
-          ? toLocalInput(selectedOrder.plannedDate)
+          ? formatInputValue(selectedOrder.plannedDate)
           : ""
       );
+      setServiceRows(
+        selectedOrder.services.map((row) => ({
+          id: row.id,
+          serviceId: row.serviceId,
+          quantity: row.quantity,
+          unitPrice: Number(row.price),
+          name: row.service.name,
+        })),
+      );
+      setPartRows(
+        selectedOrder.parts.map((row) => ({
+          id: row.id,
+          partId: row.partId,
+          quantity: row.quantity,
+          unitPrice: Number(row.price),
+          name: row.part.name,
+          article: row.part.article,
+        })),
+      );
+      setServiceDraft({ serviceId: "", quantity: "1" });
+      setPartDraft({ partId: "", quantity: "1" });
+    } else {
+      setStatus("");
+      setResponsible("");
+      setPlannedDate("");
+      setServiceRows([]);
+      setPartRows([]);
+      setServiceDraft({ serviceId: "", quantity: "1" });
+      setPartDraft({ partId: "", quantity: "1" });
     }
   }, [selectedOrder]);
 
@@ -154,112 +198,140 @@ function nowLocalInput() {
     setOrders((prev) => prev.map((o) => (o.id === updated.id ? updated : o)));
   };
 
-  const handleSaveDetails = async (event: React.FormEvent<HTMLFormElement>) => {
+  const resetDraft = () => {
+    if (!selectedOrder) return;
+    setStatus(selectedOrder.status);
+    setResponsible(selectedOrder.responsibleWorker?.id ?? "");
+      setPlannedDate(
+        selectedOrder.plannedDate
+          ? formatInputValue(selectedOrder.plannedDate)
+          : ""
+      );
+    setServiceRows(
+      selectedOrder.services.map((row) => ({
+        id: row.id,
+        serviceId: row.serviceId,
+        quantity: row.quantity,
+        unitPrice: Number(row.price),
+        name: row.service.name,
+      })),
+    );
+    setPartRows(
+      selectedOrder.parts.map((row) => ({
+        id: row.id,
+        partId: row.partId,
+        quantity: row.quantity,
+        unitPrice: Number(row.price),
+        name: row.part.name,
+        article: row.part.article,
+      })),
+    );
+    setServiceDraft({ serviceId: "", quantity: "1" });
+    setPartDraft({ partId: "", quantity: "1" });
+    setActionError(null);
+    setSuccess(null);
+  };
+
+  const handleAddServiceRow = () => {
+    if (!selectedOrder || !serviceDraft.serviceId) return;
+    setActionError(null);
+    setSuccess(null);
+    const service = services.find((s) => s.id === serviceDraft.serviceId);
+    setServiceRows((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        serviceId: serviceDraft.serviceId,
+        quantity: Math.max(1, Number(serviceDraft.quantity) || 1),
+        unitPrice: service ? Number(service.basePrice) : undefined,
+        name: service?.name,
+      },
+    ]);
+    setServiceDraft({ serviceId: "", quantity: "1" });
+  };
+
+  const handleRemoveServiceRow = (rowId: string) => {
+    setActionError(null);
+    setSuccess(null);
+    setServiceRows((prev) => prev.filter((row) => row.id !== rowId));
+  };
+
+  const handleAddPartRow = () => {
+    if (!selectedOrder || !partDraft.partId) return;
+    setActionError(null);
+    setSuccess(null);
+    const part = parts.find((p) => p.id === partDraft.partId);
+    setPartRows((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        partId: partDraft.partId,
+        quantity: Math.max(1, Number(partDraft.quantity) || 1),
+        unitPrice: part ? Number(part.price) : undefined,
+        name: part?.name,
+        article: part?.article,
+      },
+    ]);
+    setPartDraft({ partId: "", quantity: "1" });
+  };
+
+  const handleRemovePartRow = (rowId: string) => {
+    setActionError(null);
+    setSuccess(null);
+    setPartRows((prev) => prev.filter((row) => row.id !== rowId));
+  };
+
+  const handleSaveDraft = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!selectedOrder) return;
     setActionError(null);
     setSuccess(null);
+    setSaving(true);
     try {
-      const updated = await updateWorkOrderDetails(selectedOrder.id, {
+      const payload = {
+        status: status || undefined,
         plannedDate: plannedDate || null,
         responsibleWorkerId: responsible || null,
-      });
-      let current = updated;
-      if (status && status !== updated.status) {
-        current = await updateWorkOrderStatus(updated.id, status);
-      }
-      replaceOrder(current);
-      setSuccess("Заказ-наряд обновлен.");
+        services: serviceRows.map((row) => ({
+          serviceId: row.serviceId,
+          quantity: row.quantity,
+        })),
+        parts: partRows.map((row) => ({
+          partId: row.partId,
+          quantity: row.quantity,
+        })),
+      };
+
+      const updated = await updateWorkOrder(selectedOrder.id, payload);
+      replaceOrder(updated);
+      setSuccess("Заказ-наряд сохранен.");
       onUpdated?.();
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Не удалось обновить заказ-наряд"
+        err instanceof Error
+          ? err.message
+          : "Не удалось сохранить заказ-наряд"
       );
+    } finally {
+      setSaving(false);
     }
   };
 
-  const handleAddService = async () => {
-    if (!selectedOrder || !serviceDraft.serviceId) return;
-    setActionError(null);
-    setSuccess(null);
-    try {
-      const updated = await addWorkOrderService(selectedOrder.id, {
-        serviceId: serviceDraft.serviceId,
-        quantity: Math.max(1, Number(serviceDraft.quantity) || 1),
-      });
-      replaceOrder(updated);
-      setServiceDraft({ serviceId: "", quantity: "1" });
-      setSuccess("Услуга добавлена.");
-      onUpdated?.();
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Не удалось добавить услугу"
-      );
-    }
-  };
-
-  const handleDeleteService = async (rowId: string) => {
-    if (!selectedOrder) return;
-    setActionError(null);
-    setSuccess(null);
-    try {
-      const updated = await deleteWorkOrderService(selectedOrder.id, rowId);
-      replaceOrder(updated);
-      setSuccess("Услуга удалена.");
-      onUpdated?.();
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Не удалось удалить услугу",
-      );
-    }
-  };
-
-  const handleAddPart = async () => {
-    if (!selectedOrder || !partDraft.partId) return;
-    setActionError(null);
-    setSuccess(null);
-    try {
-      const updated = await addWorkOrderPart(selectedOrder.id, {
-        partId: partDraft.partId,
-        quantity: Math.max(1, Number(partDraft.quantity) || 1),
-      });
-      replaceOrder(updated);
-      setPartDraft({ partId: "", quantity: "1" });
-      setSuccess("Запчасть добавлена.");
-      onUpdated?.();
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Не удалось добавить запчасть"
-      );
-    }
-  };
-
-  const handleDeletePart = async (rowId: string) => {
-    if (!selectedOrder) return;
-    setActionError(null);
-    setSuccess(null);
-    try {
-      const updated = await deleteWorkOrderPart(selectedOrder.id, rowId);
-      replaceOrder(updated);
-      setSuccess("Запчасть удалена.");
-      onUpdated?.();
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Не удалось удалить запчасть",
-      );
-    }
-  };
+  const formatMoney = (value?: number) =>
+    value === undefined || Number.isNaN(value) ? "--" : value.toFixed(2);
 
   return (
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>Редактирование заказ-нарядов</p>
-          <h3 style={{ margin: "4px 0 0" }}>Изменить и дополнить</h3>
+          <p className={styles.muted}>Управление заказ-нарядами</p>
+          <h3 style={{ margin: "4px 0 0" }}>
+            Редактирование существующих заказ-нарядов
+          </h3>
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка по дате</span>
+            <span className={styles.label}>Сортировка</span>
             <select
               className={styles.select}
               value={sort}
@@ -300,9 +372,9 @@ function nowLocalInput() {
             <option value="">Не выбрано</option>
             {formattedOrders.map((order) => (
               <option key={order.id} value={order.id}>
-                {order.number} · {order.vehicle.make} {order.vehicle.model} (
-                {order.vehicle.licensePlate}) ·{" "}
-                {WORK_ORDER_STATUS_LABELS[order.status]} ·{" "}
+                {order.number} — {order.vehicle.make} {order.vehicle.model} (
+                {order.vehicle.licensePlate}) —{" "}
+                {WORK_ORDER_STATUS_LABELS[order.status]} —{" "}
                 {new Date(order.createdAt).toLocaleString()}
               </option>
             ))}
@@ -310,8 +382,8 @@ function nowLocalInput() {
         </label>
 
         {selectedOrder && (
-          <>
-            <form className={styles.formGrid} onSubmit={handleSaveDetails}>
+          <form className={styles.stack} onSubmit={handleSaveDraft}>
+            <div className={styles.formGrid}>
               <label className={styles.selectLabel}>
                 <span className={styles.label}>Статус</span>
                 <select
@@ -330,7 +402,7 @@ function nowLocalInput() {
               </label>
 
               <TextInput
-                label="Плановая дата"
+                label="Планируемая дата"
                 type="datetime-local"
                 min={nowLocalInput()}
                 value={plannedDate}
@@ -344,7 +416,7 @@ function nowLocalInput() {
                   value={responsible}
                   onChange={(event) => setResponsible(event.target.value)}
                 >
-                  <option value="">Не назначен</option>
+                  <option value="">Без ответственного</option>
                   <option value={profile.id}>
                     Я ({profile.name} {profile.surname})
                   </option>
@@ -355,13 +427,7 @@ function nowLocalInput() {
                   ))}
                 </select>
               </label>
-
-              <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-                <Button type="submit" disabled={loading}>
-                  Сохранить изменения
-                </Button>
-              </div>
-            </form>
+            </div>
 
             <div className={styles.inlineForm}>
               <label className={styles.selectLabel}>
@@ -399,19 +465,19 @@ function nowLocalInput() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={handleAddService}
+                onClick={handleAddServiceRow}
               >
                 Добавить услугу
               </Button>
             </div>
 
-            {selectedOrder.services.length > 0 && (
+            {serviceRows.length > 0 && (
               <div className={styles.tableWrapper}>
-                <div className={styles.tableTitle}>Текущие услуги</div>
+                <div className={styles.tableTitle}>Услуги</div>
                 <table className={styles.simpleTable}>
                   <thead>
                     <tr>
-                      <th>Название</th>
+                      <th>Наименование</th>
                       <th>Кол-во</th>
                       <th>Цена</th>
                       <th>Сумма</th>
@@ -419,23 +485,35 @@ function nowLocalInput() {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedOrder.services.map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.service.name}</td>
-                        <td>{row.quantity}</td>
-                        <td>{row.price}</td>
-                        <td>{row.total}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className={styles.linkButton}
-                            onClick={() => handleDeleteService(row.id)}
-                          >
-                            Удалить
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {serviceRows.map((row) => {
+                      const service = services.find(
+                        (item) => item.id === row.serviceId
+                      );
+                      const unitPrice =
+                        row.unitPrice ??
+                        (service ? Number(service.basePrice) : undefined);
+                      const total =
+                        unitPrice !== undefined
+                          ? unitPrice * row.quantity
+                          : undefined;
+                      return (
+                        <tr key={row.id}>
+                          <td>{row.name ?? service?.name ?? row.serviceId}</td>
+                          <td>{row.quantity}</td>
+                          <td>{formatMoney(unitPrice)}</td>
+                          <td>{formatMoney(total)}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className={styles.linkButton}
+                              onClick={() => handleRemoveServiceRow(row.id)}
+                            >
+                              Удалить
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -474,18 +552,18 @@ function nowLocalInput() {
                   }))
                 }
               />
-              <Button type="button" variant="outline" onClick={handleAddPart}>
+              <Button type="button" variant="outline" onClick={handleAddPartRow}>
                 Добавить запчасть
               </Button>
             </div>
 
-            {selectedOrder.parts.length > 0 && (
+            {partRows.length > 0 && (
               <div className={styles.tableWrapper}>
-                <div className={styles.tableTitle}>Текущие запчасти</div>
+                <div className={styles.tableTitle}>Запчасти</div>
                 <table className={styles.simpleTable}>
                   <thead>
                     <tr>
-                      <th>Название</th>
+                      <th>Наименование</th>
                       <th>Артикул</th>
                       <th>Кол-во</th>
                       <th>Цена</th>
@@ -494,24 +572,33 @@ function nowLocalInput() {
                     </tr>
                   </thead>
                   <tbody>
-                    {selectedOrder.parts.map((row) => (
-                      <tr key={row.id}>
-                        <td>{row.part.name}</td>
-                        <td>{row.part.article}</td>
-                        <td>{row.quantity}</td>
-                        <td>{row.price}</td>
-                        <td>{row.total}</td>
-                        <td>
-                          <button
-                            type="button"
-                            className={styles.linkButton}
-                            onClick={() => handleDeletePart(row.id)}
-                          >
-                            Удалить
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {partRows.map((row) => {
+                      const part = parts.find((item) => item.id === row.partId);
+                      const unitPrice =
+                        row.unitPrice ?? (part ? Number(part.price) : undefined);
+                      const total =
+                        unitPrice !== undefined
+                          ? unitPrice * row.quantity
+                          : undefined;
+                      return (
+                        <tr key={row.id}>
+                          <td>{row.name ?? part?.name ?? row.partId}</td>
+                          <td>{row.article ?? part?.article ?? "--"}</td>
+                          <td>{row.quantity}</td>
+                          <td>{formatMoney(unitPrice)}</td>
+                          <td>{formatMoney(total)}</td>
+                          <td>
+                            <button
+                              type="button"
+                              className={styles.linkButton}
+                              onClick={() => handleRemovePartRow(row.id)}
+                            >
+                              Удалить
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -523,7 +610,16 @@ function nowLocalInput() {
               </div>
             )}
             {success && <div className={styles.success}>{success}</div>}
-          </>
+
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+              <Button type="submit" disabled={loading || saving}>
+                {saving ? "Сохраняем..." : "Сохранить изменения"}
+              </Button>
+              <Button type="button" variant="ghost" onClick={resetDraft}>
+                Сбросить
+              </Button>
+            </div>
+          </form>
         )}
       </div>
     </div>

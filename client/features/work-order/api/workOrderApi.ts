@@ -82,6 +82,16 @@ export interface CreateWorkOrderPayload {
   plannedDate?: string;
 }
 
+export interface WorkOrderServiceInput {
+  serviceId: string;
+  quantity: number;
+}
+
+export interface WorkOrderPartInput {
+  partId: string;
+  quantity: number;
+}
+
 export interface WorkOrderFilters {
   status?: WorkOrderStatus;
 }
@@ -140,12 +150,22 @@ export async function updateWorkOrderStatus(id: string, status: WorkOrderStatus)
   });
 }
 
-export async function updateWorkOrderDetails(
+export interface UpdateWorkOrderPayload {
+  status?: WorkOrderStatus;
+  responsibleWorkerId?: string | null;
+  plannedDate?: string | null;
+  services?: WorkOrderServiceInput[];
+  parts?: WorkOrderPartInput[];
+}
+
+export async function updateWorkOrder(
   id: string,
-  payload: { responsibleWorkerId?: string | null; plannedDate?: string | null },
+  payload: UpdateWorkOrderPayload,
 ) {
   return apiRequest<WorkOrder>(WORK_ORDER_ENDPOINTS.update(id), {
     method: "PATCH",
     body: JSON.stringify(payload),
   });
 }
+
+export const updateWorkOrderDetails = updateWorkOrder;

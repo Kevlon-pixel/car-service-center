@@ -21,7 +21,7 @@ import { WorkOrderFiltersDto } from './dto/work-order-filters.dto';
 import { UpdateWorkOrderStatusDto } from './dto/update-work-order-status.dto';
 import { AddWorkOrderServiceDto } from './dto/add-work-order-service.dto';
 import { AddWorkOrderPartDto } from './dto/add-work-order-part.dto';
-import { UpdateWorkOrderDetailsDto } from './dto/update-work-order-details.dto';
+import { UpdateWorkOrderDto } from './dto/update-work-order.dto';
 
 @Injectable()
 export class WorkOrderService {
@@ -75,7 +75,9 @@ export class WorkOrderService {
 
     const plannedDate =
       dto.plannedDate !== undefined
-        ? new Date(dto.plannedDate)
+        ? dto.plannedDate
+          ? this.parseLocalDateTime(dto.plannedDate)
+          : null
         : (request.desiredDate ?? null);
 
     const number = await this.generateWorkOrderNumber();
@@ -183,9 +185,9 @@ export class WorkOrderService {
     }
   }
 
-  async updateDetails(
+  async updateWorkOrder(
     id: string,
-    dto: UpdateWorkOrderDetailsDto,
+    dto: UpdateWorkOrderDto,
   ): Promise<WorkOrderWithRelations> {
     const workOrder = await this.prisma.workOrder.findUnique({
       where: { id },
@@ -195,9 +197,16 @@ export class WorkOrderService {
       throw new NotFoundException('Work order not found');
     }
 
+    const hasEditableChanges =
+      dto.plannedDate !== undefined ||
+      dto.responsibleWorkerId !== undefined ||
+      dto.services !== undefined ||
+      dto.parts !== undefined;
+
     if (
-      workOrder.status === WorkOrderStatus.COMPLETED ||
-      workOrder.status === WorkOrderStatus.CANCELLED
+      hasEditableChanges &&
+      (workOrder.status === WorkOrderStatus.COMPLETED ||
+        workOrder.status === WorkOrderStatus.CANCELLED)
     ) {
       throw new BadRequestException('Work order is not editable');
     }
@@ -221,25 +230,106 @@ export class WorkOrderService {
       }
     }
 
-    const data: Prisma.WorkOrderUncheckedUpdateInput = {};
+    const serviceInputs = dto.services ?? null;
+    const partInputs = dto.parts ?? null;
+
+    const servicePrices =
+      serviceInputs && serviceInputs.length > 0
+        ? await this.getServicePricesMap(serviceInputs.map((item) => item.serviceId))
+        : null;
+
+    const partPrices =
+      partInputs && partInputs.length > 0
+        ? await this.getPartPricesMap(partInputs.map((item) => item.partId))
+        : null;
+
+    const workOrderUpdate: Prisma.WorkOrderUncheckedUpdateInput = {};
 
     if (dto.plannedDate !== undefined) {
-      data.plannedDate = dto.plannedDate ? new Date(dto.plannedDate) : null;
+      workOrderUpdate.plannedDate =
+        dto.plannedDate === null || dto.plannedDate === ''
+          ? null
+          : this.parseLocalDateTime(dto.plannedDate);
     }
 
     if (dto.responsibleWorkerId !== undefined) {
-      data.responsibleWorkerId = dto.responsibleWorkerId || null;
+      workOrderUpdate.responsibleWorkerId =
+        dto.responsibleWorkerId === null || dto.responsibleWorkerId === ''
+          ? null
+          : dto.responsibleWorkerId;
     }
 
-    if (Object.keys(data).length === 0) {
+    if (dto.status !== undefined) {
+      workOrderUpdate.status = dto.status;
+
+      if (dto.status === WorkOrderStatus.COMPLETED) {
+        workOrderUpdate.completedDate = new Date();
+      }
+    }
+
+    const hasChanges =
+      Object.keys(workOrderUpdate).length > 0 ||
+      serviceInputs !== null ||
+      partInputs !== null;
+
+    if (!hasChanges) {
       throw new BadRequestException('No fields to update');
     }
 
     try {
-      return await this.prisma.workOrder.update({
-        where: { id },
-        data,
-        include: workOrderInclude,
+      return await this.prisma.$transaction(async (tx) => {
+        if (serviceInputs !== null) {
+          await tx.workOrderService.deleteMany({ where: { workOrderId: id } });
+
+          if (serviceInputs.length > 0 && servicePrices) {
+            await tx.workOrderService.createMany({
+              data: serviceInputs.map((input) => {
+                const price = servicePrices[input.serviceId];
+                const quantity = input.quantity ?? 1;
+                return {
+                  workOrderId: id,
+                  serviceId: input.serviceId,
+                  quantity,
+                  price,
+                  total: price.mul(quantity),
+                };
+              }),
+            });
+          }
+        }
+
+        if (partInputs !== null) {
+          await tx.workOrderPart.deleteMany({ where: { workOrderId: id } });
+
+          if (partInputs.length > 0 && partPrices) {
+            await tx.workOrderPart.createMany({
+              data: partInputs.map((input) => {
+                const price = partPrices[input.partId];
+                const quantity = input.quantity ?? 1;
+                return {
+                  workOrderId: id,
+                  partId: input.partId,
+                  quantity,
+                  price,
+                  total: price.mul(quantity),
+                };
+              }),
+            });
+          }
+        }
+
+        if (serviceInputs !== null || partInputs !== null) {
+          const totals = await this.calculateTotals(id, tx);
+          workOrderUpdate.totalLaborCost = totals.totalLaborCost;
+          workOrderUpdate.totalPartsCost = totals.totalPartsCost;
+          workOrderUpdate.totalCost = totals.totalCost;
+        }
+
+        return tx.workOrder.update({
+          where: { id },
+          data: workOrderUpdate,
+          include: workOrderInclude,
+        });
       });
     } catch (err) {
       throw new InternalServerErrorException(
@@ -370,12 +460,45 @@ export class WorkOrderService {
     }
   }
 
-  private async recalculateTotals(
+  private async getServicePricesMap(serviceIds: string[]) {
+    const uniqueIds = Array.from(new Set(serviceIds));
+    const services = await this.prisma.service.findMany({
+      where: { id: { in: uniqueIds }, isActive: true },
+    });
+
+    if (services.length !== uniqueIds.length) {
+      throw new NotFoundException('One or more services not found');
+    }
+
+    return services.reduce<Record<string, Prisma.Decimal>>((acc, service) => {
+      acc[service.id] = new Prisma.Decimal(service.basePrice);
+      return acc;
+    }, {});
+  }
+
+  private async getPartPricesMap(partIds: string[]) {
+    const uniqueIds = Array.from(new Set(partIds));
+    const parts = await this.prisma.sparePart.findMany({
+      where: { id: { in: uniqueIds }, isActive: true },
+    });
+
+    if (parts.length !== uniqueIds.length) {
+      throw new NotFoundException('One or more spare parts not found');
+    }
+
+    return parts.reduce<Record<string, Prisma.Decimal>>((acc, part) => {
+      acc[part.id] = new Prisma.Decimal(part.price);
+      return acc;
+    }, {});
+  }
+
+  private async calculateTotals(
     workOrderId: string,
-  ): Promise<WorkOrderWithRelations> {
+    prismaClient: PrismaService | Prisma.TransactionClient = this.prisma,
+  ) {
     const [services, parts] = await Promise.all([
-      this.prisma.workOrderService.findMany({ where: { workOrderId } }),
-      this.prisma.workOrderPart.findMany({ where: { workOrderId } }),
+      prismaClient.workOrderService.findMany({ where: { workOrderId } }),
+      prismaClient.workOrderPart.findMany({ where: { workOrderId } }),
     ]);
 
     const totalLaborCost = services.reduce(
@@ -390,14 +513,19 @@ export class WorkOrderService {
 
     const totalCost = totalLaborCost.plus(totalPartsCost);
 
+    return { totalLaborCost, totalPartsCost, totalCost };
+  }
+
+  private async recalculateTotals(
+    workOrderId: string,
+    prismaClient: PrismaService | Prisma.TransactionClient = this.prisma,
+  ): Promise<WorkOrderWithRelations> {
     try {
-      return await this.prisma.workOrder.update({
+      const totals = await this.calculateTotals(workOrderId, prismaClient);
+
+      return await prismaClient.workOrder.update({
         where: { id: workOrderId },
-        data: {
-          totalLaborCost,
-          totalPartsCost,
-          totalCost,
-        },
+        data: totals,
         include: workOrderInclude,
       });
     } catch (err) {
@@ -422,6 +550,11 @@ export class WorkOrderService {
     ) {
       throw new BadRequestException('Work order is not editable');
     }
+  }
+
+  private parseLocalDateTime(input: string) {
+    // Preserve wall-time entered in datetime-local control (no TZ info)
+    return new Date(`${input}Z`);
   }
 
   private async generateWorkOrderNumber(): Promise<string> {

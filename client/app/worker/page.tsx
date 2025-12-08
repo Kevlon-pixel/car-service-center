@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,13 +23,16 @@ export default function WorkerDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [activeSection, setActiveSection] = useState<"create" | "edit">(
+    "create",
+  );
 
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const token = await restoreSession();
-        if (!token) {   
-          setError("Сначала войдите как сотрудник.");
+        if (!token) {
+          setError("Сессия истекла, выполните вход.");
           setLoading(false);
           return;
         }
@@ -37,7 +40,7 @@ export default function WorkerDashboardPage() {
         setProfile(me);
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Не удалось загрузить профиль"
+          err instanceof Error ? err.message : "Не удалось загрузить профиль",
         );
       } finally {
         setLoading(false);
@@ -55,7 +58,7 @@ export default function WorkerDashboardPage() {
   if (loading) {
     return (
       <div className="container">
-        <div className={styles.card}>Загружаем профиль…</div>
+        <div className={styles.card}>Загружаем профиль...</div>
       </div>
     );
   }
@@ -64,8 +67,8 @@ export default function WorkerDashboardPage() {
     return (
       <div className="container">
         <div className={styles.alert}>
-          <span>{error ?? "Не найден профиль пользователя"}</span>
-          <Link href="/login">На страницу входа</Link>
+          <span>{error ?? "Не удалось загрузить профиль"}</span>
+          <Link href="/login">Перейти к входу</Link>
         </div>
       </div>
     );
@@ -75,8 +78,8 @@ export default function WorkerDashboardPage() {
     return (
       <div className="container">
         <div className={styles.alert}>
-          <span>Этот кабинет доступен только сотрудникам.</span>
-          <Link href="/dashboard">Вернуться в личный кабинет</Link>
+          <span>У вас нет прав для доступа в этот раздел.</span>
+          <Link href="/dashboard">Вернуться в кабинет</Link>
         </div>
       </div>
     );
@@ -113,16 +116,41 @@ export default function WorkerDashboardPage() {
           </div>
         </div>
 
-        <WorkOrderCreateSection
-          profile={profile}
-          onCreated={() => setRefreshKey((key) => key + 1)}
-        />
-        <WorkOrderEditSection
-          profile={profile}
-          onUpdated={() => setRefreshKey((key) => key + 1)}
-        />
-        <ServiceRequestsSection reloadKey={refreshKey} />
-        <WorkOrdersList reloadKey={refreshKey} />
+        <div style={{ display: "flex", gap: 12, margin: "12px 0 8px" }}>
+          <Button
+            type="button"
+            variant={activeSection === "create" ? "primary" : "outline"}
+            onClick={() => setActiveSection("create")}
+          >
+            Создание заказ-наряда
+          </Button>
+          <Button
+            type="button"
+            variant={activeSection === "edit" ? "primary" : "outline"}
+            onClick={() => setActiveSection("edit")}
+          >
+            Редактирование заказ-наряда
+          </Button>
+        </div>
+
+        {activeSection === "create" ? (
+          <>
+            <WorkOrderCreateSection
+              profile={profile}
+              onCreated={() => setRefreshKey((key) => key + 1)}
+            />
+            <ServiceRequestsSection reloadKey={refreshKey} />
+            <WorkOrdersList reloadKey={refreshKey} />
+          </>
+        ) : (
+          <>
+            <WorkOrderEditSection
+              profile={profile}
+              onUpdated={() => setRefreshKey((key) => key + 1)}
+            />
+            <WorkOrdersList reloadKey={refreshKey} />
+          </>
+        )}
       </div>
     </div>
   );
