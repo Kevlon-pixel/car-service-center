@@ -12,6 +12,7 @@ export const AUTH_ENDPOINTS = {
 export const USER_ENDPOINTS = {
   me: '/users/me',
   all: '/users',
+  updateRole: (id: string) => `/users/${id}/role`,
 };
 
 export const VEHICLE_ENDPOINTS = {

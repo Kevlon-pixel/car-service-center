@@ -60,8 +60,13 @@ export function HeaderAuth() {
 
   if (state.status === 'user') {
     const isWorker = state.user.role === 'WORKER';
-    const dashboardHref = isWorker ? '/worker' : '/dashboard';
-    const dashboardLabel = isWorker ? 'Кабинет сотрудника' : 'Личный кабинет';
+    const isAdmin = state.user.role === 'ADMIN';
+    const dashboardHref = isWorker ? '/worker' : isAdmin ? '/admin' : '/dashboard';
+    const dashboardLabel = isWorker
+      ? 'Кабинет сотрудника'
+      : isAdmin
+        ? 'Кабинет администратора'
+        : 'Личный кабинет';
 
     return (
       <>

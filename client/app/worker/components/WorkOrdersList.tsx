@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -48,7 +50,9 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
       setVisibleCount(5);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Не удалось загрузить заказ-наряды",
+        err instanceof Error
+          ? err.message
+          : "Не удалось загрузить заказ-наряды",
       );
     } finally {
       setLoading(false);
@@ -75,8 +79,8 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>История заказ-нарядов</p>
-          <h3 style={{ margin: "4px 0 0" }}>Все работы</h3>
+          <p className={styles.muted}>Работа с заказ-нарядами</p>
+          <h3 style={{ margin: "4px 0 0" }}>Заказ-наряды</h3>
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
@@ -97,14 +101,14 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
           </label>
 
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка</span>
+            <span className={styles.label}>Сортировка по дате</span>
             <select
               className={styles.select}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">По дате ↓</option>
-              <option value="created-asc">По дате ↑</option>
+              <option value="created-desc">Сначала новые</option>
+              <option value="created-asc">Сначала старые</option>
             </select>
           </label>
           <Button
@@ -132,7 +136,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
       )}
 
       {loading ? (
-        <div className={styles.muted}>Загружаем заказ-наряды…</div>
+        <div className={styles.muted}>Загрузка заказ-нарядов...</div>
       ) : visibleOrders.length === 0 ? (
         <div className={styles.muted}>Заказ-наряды не найдены.</div>
       ) : (
@@ -181,7 +185,9 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
               <div className={styles.requestMeta}>
                 <span>Создан: {new Date(order.createdAt).toLocaleString()}</span>
                 {order.completedDate && (
-                  <span>Завершен: {new Date(order.completedDate).toLocaleString()}</span>
+                  <span>
+                    Завершён: {new Date(order.completedDate).toLocaleString()}
+                  </span>
                 )}
                 <span>Работы: {order.totalLaborCost}</span>
                 <span>Запчасти: {order.totalPartsCost}</span>
@@ -190,7 +196,7 @@ export function WorkOrdersList({ reloadKey }: WorkOrdersListProps) {
 
               {order.services.length > 0 && (
                 <div className={styles.tableWrapper}>
-                  <div className={styles.tableTitle}>Услуги</div>
+                  <div className={styles.tableTitle}>Работы</div>
                   <table className={styles.simpleTable}>
                     <thead>
                       <tr>

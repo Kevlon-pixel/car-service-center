@@ -163,6 +163,11 @@ export default function DashboardPage() {
     );
   }
 
+  if (profile.role === "ADMIN") {
+    router.replace("/admin");
+    return null;
+  }
+
   if (profile.role === "WORKER") {
     router.replace("/worker");
     return null;

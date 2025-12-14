@@ -9,16 +9,19 @@ import {
   Patch,
   Post,
   Req,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 import { JwtAuthGuard } from '../../shared/guards/jwt-auth.guard';
 import { SystemRole } from '@prisma/client';
 import { Roles } from 'src/shared/decorators/roles.decorator';
 import { RolesGuard } from 'src/shared/guards/roles.guard';
+import { UserFiltersDto } from './dto/user-filters.dto';
 
 @Controller('users')
 export class UserController {
@@ -70,8 +73,21 @@ export class UserController {
   @Roles(SystemRole.ADMIN)
   @ApiOperation({ summary: 'List all users (admin only)' })
   @Get()
-  async getAllUsers() {
-    return this.userService.findAllUsers();
+  async getAllUsers(@Query() filters: UserFiltersDto) {
+    return this.userService.findAllUsers(filters);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(SystemRole.ADMIN)
+  @ApiOperation({ summary: 'Update user role (admin only)' })
+  @Patch(':id/role')
+  async updateUserRole(
+    @Req() req,
+    @Param('id') id: string,
+    @Body() dto: UpdateUserRoleDto,
+  ) {
+    return this.userService.updateUserRole(id, dto, req.user.id);
   }
 
   @ApiBearerAuth('access-token')

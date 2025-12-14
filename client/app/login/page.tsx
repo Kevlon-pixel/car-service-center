@@ -21,7 +21,8 @@ export default function LoginPage() {
     try {
       await loginUser(form);
       const me = await fetchProfile();
-      const target = me.role === 'WORKER' ? '/worker' : '/dashboard';
+      const target =
+        me.role === 'ADMIN' ? '/admin' : me.role === 'WORKER' ? '/worker' : '/dashboard';
       router.replace(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось войти');

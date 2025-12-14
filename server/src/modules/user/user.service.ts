@@ -13,6 +13,12 @@ import { Prisma, SystemRole, User } from '@prisma/client';
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  UserFiltersDto,
+  UserSortOption,
+  UserStatusFilter,
+} from './dto/user-filters.dto';
+import { UpdateUserRoleDto } from './dto/update-user-role.dto';
 
 @Injectable()
 export class UserService {
@@ -154,7 +160,9 @@ export class UserService {
     }
   }
 
-  async findAllUsers(): Promise<
+  async findAllUsers(
+    filters: UserFiltersDto = {} as UserFiltersDto,
+  ): Promise<
     Array<
       Pick<
         User,
@@ -170,8 +178,29 @@ export class UserService {
       >
     >
   > {
+    const where: Prisma.UserWhereInput = {};
+
+    if (filters.status === UserStatusFilter.VERIFIED) {
+      where.isEmailVerified = true;
+    } else if (filters.status === UserStatusFilter.UNVERIFIED) {
+      where.isEmailVerified = false;
+    }
+
+    if (filters.search) {
+      where.surname = {
+        contains: filters.search,
+        mode: 'insensitive',
+      };
+    }
+
+    const orderBy =
+      filters.sort === UserSortOption.SURNAME_DESC
+        ? { surname: 'desc' as const }
+        : { surname: 'asc' as const };
+
     try {
       return await this.prisma.user.findMany({
+        where,
         select: {
           id: true,
           email: true,
@@ -183,6 +212,7 @@ export class UserService {
           createdAt: true,
           updatedAt: true,
         },
+        orderBy,
       });
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch users');
@@ -225,6 +255,53 @@ export class UserService {
       return userWithoutPassword;
     } catch (err) {
       throw new InternalServerErrorException('Failed to fetch user by id');
+    }
+  }
+
+  async updateUserRole(
+    userId: string,
+    dto: UpdateUserRoleDto,
+    actingUserId: string,
+  ): Promise<Omit<User, 'passwordHash'>> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.id === actingUserId) {
+      throw new BadRequestException('Users cannot change their own role');
+    }
+
+    if (user.role === dto.role) {
+      const { passwordHash, ...rest } = user;
+      return rest;
+    }
+
+    if (user.role === SystemRole.ADMIN && dto.role !== SystemRole.ADMIN) {
+      const adminCount = await this.prisma.user.count({
+        where: { role: SystemRole.ADMIN },
+      });
+
+      if (adminCount <= 1) {
+        throw new BadRequestException('Cannot demote the last admin user');
+      }
+    }
+
+    try {
+      const updatedUser = await this.prisma.user.update({
+        where: { id: userId },
+        data: { role: dto.role },
+      });
+      const { passwordHash, ...userWithoutPassword } = updatedUser;
+      return userWithoutPassword;
+    } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
+      throw new InternalServerErrorException('Failed to update user role');
     }
   }
 

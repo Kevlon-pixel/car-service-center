@@ -325,14 +325,14 @@ export function WorkOrderEditSection({
         </div>
         <div className={styles.filters}>
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка</span>
+            <span className={styles.label}>Сортировка по дате</span>
             <select
               className={styles.select}
               value={sort}
               onChange={(event) => setSort(event.target.value as SortOption)}
             >
-              <option value="created-desc">По дате ↓</option>
-              <option value="created-asc">По дате ↑</option>
+              <option value="created-desc">Сначала новые</option>
+              <option value="created-asc">Сначала старые</option>
             </select>
           </label>
           <Button type="button" variant="ghost" onClick={loadData} disabled={loading}>

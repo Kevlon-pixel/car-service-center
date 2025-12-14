@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useState } from "react";
 
 import {
@@ -43,7 +45,7 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load service requests",
+            : "Не удалось загрузить заявки",
         );
       } finally {
         setLoading(false);
@@ -60,8 +62,8 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>Входящие заявки</p>
-          <h3 style={{ margin: "4px 0 0" }}>Очередь заявок</h3>
+          <p className={styles.muted}>Работа с заявками клиентов</p>
+          <h3 style={{ margin: "4px 0 0" }}>Заявки</h3>
         </div>
 
         <div className={styles.filters}>
@@ -114,17 +116,15 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
             size="md"
             onClick={() => loadRequests(status)}
           >
-            Retry
+            Повторить
           </Button>
         </div>
       )}
 
       {loading ? (
-        <div className={styles.muted}>Загружаем заявки…</div>
+        <div className={styles.muted}>Загрузка заявок...</div>
       ) : requests.length === 0 ? (
-        <div className={styles.muted}>
-          Нет заявок с выбранным статусом.
-        </div>
+        <div className={styles.muted}>Заявок пока нет.</div>
       ) : (
         <>
           <div className={styles.requestList}>

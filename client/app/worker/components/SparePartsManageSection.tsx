@@ -1,3 +1,5 @@
+"use client";
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
@@ -28,6 +30,8 @@ const initialForm: SparePartInput = {
 export function SparePartsManageSection({ onChanged }: SparePartsManageSectionProps) {
   const [parts, setParts] = useState<SparePartItem[]>([]);
   const [search, setSearch] = useState("");
+  const [appliedSearch, setAppliedSearch] = useState("");
+  const [sortAsc, setSortAsc] = useState(true);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,26 +46,27 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchSpareParts(search.trim() || undefined, true);
+      const data = await fetchSpareParts(appliedSearch.trim() || undefined, true);
       setParts(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Не удалось загрузить запчасти");
+      setError(
+        err instanceof Error ? err.message : "Не удалось загрузить список запчастей",
+      );
     } finally {
       setLoading(false);
     }
-  }, [search]);
+  }, [appliedSearch]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  const sortedParts = useMemo(
-    () =>
-      [...parts].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-      ),
-    [parts],
-  );
+  const sortedParts = useMemo(() => {
+    const sorted = [...parts].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+    );
+    return sortAsc ? sorted : sorted.reverse();
+  }, [parts, sortAsc]);
 
   const resetForm = () => {
     setEditId(null);
@@ -94,7 +99,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
       } else {
         const created = await createSparePart(form);
         setParts((prev) => [...prev, created]);
-        setSuccess("Запчасть добавлена.");
+        setSuccess("Запчасть создана.");
       }
       onChanged?.();
       resetForm();
@@ -127,6 +132,8 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
     }
   };
 
+  const sortLabel = sortAsc ? "Название А–Я" : "Название Я–А";
+
   return (
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
@@ -134,23 +141,53 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
           <p className={styles.muted}>Управление запчастями</p>
           <h3 style={{ margin: "4px 0 0" }}>Запчасти</h3>
         </div>
-        <div className={styles.filters} style={{ gap: 12 }}>
-          <div style={{ minWidth: 260, maxWidth: 360, width: "100%" }}>
-            <TextInput
-              label="Поиск по названию или артикулу"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  load();
-                }
-              }}
-            />
+        <div className={styles.filters} style={{ gap: 12, flexDirection: "column" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              justifyContent: "flex-end",
+              flexWrap: "wrap",
+              alignItems: "flex-end",
+            }}
+          >
+            <div style={{ minWidth: 260, maxWidth: 360, width: "100%" }}>
+              <TextInput
+                label="Поиск по названию"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={() => setAppliedSearch(search.trim())}
+              disabled={loading}
+            >
+              Найти
+            </Button>
           </div>
-          <Button type="button" variant="ghost" onClick={load} disabled={loading}>
-            Обновить
-          </Button>
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              justifyContent: "flex-end",
+              flexWrap: "wrap",
+              alignItems: "center",
+            }}
+          >
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSortAsc((prev) => !prev)}
+              disabled={loading}
+            >
+              Сортировка: {sortLabel}
+            </Button>
+            <Button type="button" variant="ghost" onClick={load} disabled={loading}>
+              Обновить
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -186,7 +223,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
             }
           />
           <TextInput
-            label="Кол-во на складе"
+            label="Количество"
             type="number"
             min="0"
             required
@@ -205,7 +242,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
               }
             >
               <option value="true">Активна</option>
-              <option value="false">Выключена</option>
+              <option value="false">Неактивна</option>
             </select>
           </label>
         </div>
@@ -222,7 +259,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
             {saving
               ? "Сохраняем..."
               : isEditing
-                ? "Сохранить изменения"
+                ? "Обновить запчасть"
                 : "Добавить запчасть"}
           </Button>
           {isEditing && (
@@ -247,7 +284,7 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
               <th>Артикул</th>
               <th>Ед.</th>
               <th>Цена</th>
-              <th>Кол-во</th>
+              <th>Количество</th>
               <th>Статус</th>
               <th></th>
             </tr>
@@ -260,14 +297,14 @@ export function SparePartsManageSection({ onChanged }: SparePartsManageSectionPr
                 <td>{part.unit}</td>
                 <td>{part.price}</td>
                 <td>{part.stockQuantity}</td>
-                <td>{part.isActive ? "Активна" : "Выключена"}</td>
+                <td>{part.isActive ? "Активна" : "Неактивна"}</td>
                 <td style={{ display: "flex", gap: 8 }}>
                   <button
                     type="button"
                     className={styles.linkButton}
                     onClick={() => startEdit(part)}
                   >
-                    Редактировать
+                    Изменить
                   </button>
                   <button
                     type="button"
