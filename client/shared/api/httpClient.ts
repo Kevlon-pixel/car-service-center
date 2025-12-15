@@ -40,12 +40,16 @@ export async function httpClient<T>(
   { params, headers, method = 'GET', ...init }: RequestConfig = {},
 ): Promise<T> {
   const url = buildUrl(path, params);
+  const finalHeaders = new Headers(headers ?? {});
+
+  // Only set JSON content type when we actually send a body
+  if (init.body !== undefined && !finalHeaders.has('Content-Type')) {
+    finalHeaders.set('Content-Type', 'application/json');
+  }
+
   const response = await fetch(url, {
     method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...headers,
-    },
+    headers: finalHeaders,
     credentials: init.credentials ?? 'include',
     ...init,
   });

@@ -45,3 +45,8 @@ export const SERVICE_ENDPOINTS = {
 export const SPARE_PART_ENDPOINTS = {
   all: '/spare-parts',
 };
+
+export const REPORT_ENDPOINTS = {
+  financial: '/reports/financial',
+  financialCsv: '/reports/financial/csv',
+};

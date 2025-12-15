@@ -9,6 +9,7 @@ import { ServiceModule } from './modules/service/service.module';
 import { SparePartModule } from './modules/spare-part/spare-part.module';
 import { ServiceRequestModule } from './modules/service-request/service-request.module';
 import { WorkOrderModule } from './modules/work-order/work-order.module';
+import { ReportModule } from './modules/report/report.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { WorkOrderModule } from './modules/work-order/work-order.module';
     SparePartModule,
     ServiceRequestModule,
     WorkOrderModule,
+    ReportModule,
   ],
   providers: [ConfigService],
 })

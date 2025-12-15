@@ -13,22 +13,22 @@ import {
 } from "@features/auth/api/authApi";
 import { Button } from "@shared/ui";
 import { ServiceRequestsSection } from "../worker/components/ServiceRequestsSection";
-import { ServicesManageSection } from "../worker/components/ServicesManageSection";
-import { SparePartsManageSection } from "../worker/components/SparePartsManageSection";
-import { WorkOrderCreateSection } from "../worker/components/WorkOrderCreateSection";
-import { WorkOrderEditSection } from "../worker/components/WorkOrderEditSection";
 import { WorkOrdersList } from "../worker/components/WorkOrdersList";
 import { UsersListSection } from "./components/UsersListSection";
+import { ServicesListSection } from "./components/ServicesListSection";
+import { SparePartsListSection } from "./components/SparePartsListSection";
+import { ReportsSection } from "./components/ReportsSection";
 import styles from "../dashboard/dashboard.module.scss";
 
-type SectionKey = "requests" | "orders" | "services" | "parts" | "users";
+type SectionKey = "requests" | "orders" | "services" | "parts" | "users" | "reports";
 
 const sections: Array<{ key: SectionKey; label: string }> = [
-  { key: "requests", label: "Заявки и создание" },
+  { key: "requests", label: "Заявки" },
   { key: "orders", label: "Заказ-наряды" },
-  { key: "services", label: "Услуги" },
-  { key: "parts", label: "Запчасти" },
+  { key: "services", label: "Услуги (просмотр)" },
+  { key: "parts", label: "Запчасти (просмотр)" },
   { key: "users", label: "Пользователи" },
+  { key: "reports", label: "Отчеты" },
 ];
 
 export default function AdminDashboardPage() {
@@ -36,7 +36,6 @@ export default function AdminDashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
   const [activeSection, setActiveSection] = useState<SectionKey>("requests");
 
   useEffect(() => {
@@ -148,37 +147,17 @@ export default function AdminDashboardPage() {
         {(() => {
           switch (activeSection) {
             case "requests":
-              return (
-                <>
-                  <WorkOrderCreateSection
-                    profile={profile}
-                    onCreated={() => setRefreshKey((key) => key + 1)}
-                  />
-                  <ServiceRequestsSection reloadKey={refreshKey} />
-                </>
-              );
+              return <ServiceRequestsSection />;
             case "orders":
-              return (
-                <>
-                  <WorkOrderEditSection
-                    profile={profile}
-                    onUpdated={() => setRefreshKey((key) => key + 1)}
-                  />
-                  <WorkOrdersList reloadKey={refreshKey} />
-                </>
-              );
+              return <WorkOrdersList />;
             case "services":
-              return (
-                <ServicesManageSection onChanged={() => setRefreshKey((key) => key + 1)} />
-              );
+              return <ServicesListSection />;
             case "parts":
-              return (
-                <SparePartsManageSection
-                  onChanged={() => setRefreshKey((key) => key + 1)}
-                />
-              );
+              return <SparePartsListSection />;
             case "users":
-              return <UsersListSection reloadKey={refreshKey} />;
+              return <UsersListSection />;
+            case "reports":
+              return <ReportsSection />;
             default:
               return null;
           }

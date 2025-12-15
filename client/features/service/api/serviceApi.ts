@@ -7,6 +7,7 @@ export interface ServiceItem {
   description?: string | null;
   basePrice: string;
   durationMin?: number | null;
+  isActive: boolean;
 }
 
 export async function fetchServices(search?: string, includeInactive?: boolean) {
