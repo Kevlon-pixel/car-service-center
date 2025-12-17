@@ -1,4 +1,4 @@
-'use client';
+﻿"use client";
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -65,7 +65,7 @@ export function HeaderAuth() {
     const dashboardLabel = isWorker
       ? 'Кабинет сотрудника'
       : isAdmin
-        ? 'Кабинет администратора'
+        ? 'Панель администратора'
         : 'Личный кабинет';
 
     return (

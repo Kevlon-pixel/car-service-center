@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,8 +25,8 @@ type SectionKey = "requests" | "orders" | "services" | "parts" | "users" | "repo
 const sections: Array<{ key: SectionKey; label: string }> = [
   { key: "requests", label: "Заявки" },
   { key: "orders", label: "Заказ-наряды" },
-  { key: "services", label: "Услуги (просмотр)" },
-  { key: "parts", label: "Запчасти (просмотр)" },
+  { key: "services", label: "Услуги" },
+  { key: "parts", label: "Запчасти" },
   { key: "users", label: "Пользователи" },
   { key: "reports", label: "Отчеты" },
 ];
@@ -43,7 +43,7 @@ export default function AdminDashboardPage() {
       try {
         const token = await restoreSession();
         if (!token) {
-          setError("Сессия истекла, выполните вход.");
+          setError("Сессия не найдена, авторизуйтесь заново.");
           setLoading(false);
           return;
         }
@@ -73,7 +73,7 @@ export default function AdminDashboardPage() {
   if (loading) {
     return (
       <div className="container">
-        <div className={styles.card}>Загружаем профиль...</div>
+        <div className={styles.card}>Загружаем данные...</div>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export default function AdminDashboardPage() {
       <div className="container">
         <div className={styles.alert}>
           <span>{error ?? "Не удалось загрузить профиль"}</span>
-          <Link href="/login">Перейти к входу</Link>
+          <Link href="/login">Перейти к авторизации</Link>
         </div>
       </div>
     );
@@ -93,8 +93,8 @@ export default function AdminDashboardPage() {
     return (
       <div className="container">
         <div className={styles.alert}>
-          <span>У вас нет прав для доступа в этот раздел.</span>
-          <Link href="/dashboard">Вернуться в кабинет</Link>
+          <span>У вас нет прав доступа к панели администратора.</span>
+          <Link href="/dashboard">Вернуться в личный кабинет</Link>
         </div>
       </div>
     );
@@ -105,7 +105,7 @@ export default function AdminDashboardPage() {
       <div className={styles.dashboard}>
         <div className={styles.header}>
           <div>
-            <p className={styles.muted}>Кабинет администратора</p>
+            <p className={styles.muted}>Панель администратора</p>
             <h1 style={{ margin: "6px 0 0" }}>
               {profile.name} {profile.surname}
             </h1>

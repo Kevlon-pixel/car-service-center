@@ -53,6 +53,12 @@ export class WorkOrderController {
     return this.workOrderService.getMyWorkOrders(req.user.id);
   }
 
+  @ApiOperation({ summary: 'Get work orders related to me (Client)' })
+  @Get('my/related')
+  async getMyRelated(@Req() req) {
+    return this.workOrderService.getClientRelatedWorkOrders(req.user.id);
+  }
+
   @ApiOperation({ summary: 'Get work order details' })
   @UseGuards(RolesGuard)
   @Roles(SystemRole.ADMIN, SystemRole.WORKER)

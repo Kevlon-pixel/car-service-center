@@ -143,6 +143,24 @@ export class WorkOrderService {
     }
   }
 
+  async getClientRelatedWorkOrders(
+    clientId: string,
+  ): Promise<WorkOrderWithRelations[]> {
+    try {
+      return await this.prisma.workOrder.findMany({
+        where: {
+          OR: [{ clientId }, { request: { clientId } }],
+        },
+        include: workOrderInclude,
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (err) {
+      throw new InternalServerErrorException(
+        'Failed to fetch client work orders',
+      );
+    }
+  }
+
   async getById(id: string): Promise<WorkOrderWithRelations> {
     const workOrder = await this.prisma.workOrder.findUnique({
       where: { id },

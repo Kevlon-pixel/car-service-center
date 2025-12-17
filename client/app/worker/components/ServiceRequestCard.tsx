@@ -1,4 +1,4 @@
-import {
+﻿import {
   REQUEST_STATUS_LABELS,
   RequestStatus,
   ServiceRequestWithClient,
@@ -24,10 +24,12 @@ export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
       <div className={styles.requestHeader}>
         <div>
           <p className={styles.requestTitle}>
-            {request.vehicle.make} {request.vehicle.model}
+            Заявка {request.id}
           </p>
           <div className={styles.requestMeta}>
-            <span>{request.vehicle.licensePlate}</span>
+            <span>
+              {request.vehicle.make} {request.vehicle.model} ({request.vehicle.licensePlate})
+            </span>
             {request.vehicle.year && <span>{request.vehicle.year}</span>}
           </div>
         </div>
@@ -38,14 +40,14 @@ export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
 
       <div className={styles.requestMeta}>
         <span>
-          {request.client.name} {request.client.surname}
+          Клиент: {request.client.name} {request.client.surname}
         </span>
         <span>{request.client.phone}</span>
         <span>{request.client.email}</span>
       </div>
 
       {request.comment && (
-        <p className={styles.requestComment}>{request.comment}</p>
+        <p className={styles.requestComment}>Комментарий: {request.comment}</p>
       )}
 
       <div className={styles.requestMeta}>
@@ -55,6 +57,7 @@ export function ServiceRequestCard({ request }: ServiceRequestCardProps) {
           </span>
         )}
         <span>Создана: {new Date(request.createdAt).toLocaleString("ru-RU")}</span>
+        <span>Статус: {REQUEST_STATUS_LABELS[request.status]}</span>
       </div>
     </div>
   );

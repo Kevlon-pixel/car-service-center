@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useState } from "react";
 
@@ -13,7 +13,7 @@ import { ServiceRequestCard } from "./ServiceRequestCard";
 import styles from "../../dashboard/dashboard.module.scss";
 
 const statusOptions: Array<{ value: RequestStatus | "ALL"; label: string }> = [
-  { value: "ALL", label: "Все статусы" },
+  { value: "ALL", label: "Все" },
   ...REQUEST_STATUS_OPTIONS,
 ];
 
@@ -62,7 +62,7 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
     <div className={styles.card}>
       <div className={styles.sectionHeading}>
         <div>
-          <p className={styles.muted}>Работа с заявками клиентов</p>
+          <p className={styles.muted}>Заявки клиентов</p>
           <h3 style={{ margin: "4px 0 0" }}>Заявки</h3>
         </div>
 
@@ -84,7 +84,7 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
             </select>
           </label>
           <label className={styles.selectLabel}>
-            <span className={styles.label}>Сортировка по дате</span>
+            <span className={styles.label}>Сортировка</span>
             <select
               className={styles.select}
               value={sort}
@@ -92,8 +92,8 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
                 setSort(event.target.value as "created-desc" | "created-asc")
               }
             >
-              <option value="created-desc">Сначала новые</option>
-              <option value="created-asc">Сначала старые</option>
+              <option value="created-desc">Новые сверху</option>
+              <option value="created-asc">Старые сверху</option>
             </select>
           </label>
           <Button
@@ -122,9 +122,9 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
       )}
 
       {loading ? (
-        <div className={styles.muted}>Загрузка заявок...</div>
+        <div className={styles.muted}>Загружаем заявки...</div>
       ) : requests.length === 0 ? (
-        <div className={styles.muted}>Заявок пока нет.</div>
+        <div className={styles.muted}>Заявок нет.</div>
       ) : (
         <>
           <div className={styles.requestList}>
@@ -150,7 +150,7 @@ export function ServiceRequestsSection({ reloadKey }: ServiceRequestsSectionProp
                   setVisibleCount((prev) => Math.min(prev + 5, requests.length))
                 }
               >
-                Показать ещё
+                Показать еще
               </Button>
             </div>
           )}
