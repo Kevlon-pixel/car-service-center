@@ -65,9 +65,13 @@ export async function apiRequest<T>(
   options: AuthRequestOptions = {},
 ): Promise<T> {
   const { useAuth = true } = options;
-  const headers: HeadersInit = {
-    ...(config.headers ?? {}),
-  };
+  const baseHeaders = config.headers;
+  const headers: Record<string, string> =
+    baseHeaders instanceof Headers
+      ? Object.fromEntries(baseHeaders.entries())
+      : Array.isArray(baseHeaders)
+        ? Object.fromEntries(baseHeaders)
+        : { ...(baseHeaders ?? {}) };
 
   if (useAuth && tokenStorage.get()) {
     headers.Authorization = `Bearer ${tokenStorage.get()}`;
