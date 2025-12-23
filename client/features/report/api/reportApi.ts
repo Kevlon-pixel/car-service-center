@@ -54,10 +54,11 @@ export async function fetchFinancialReport(params: {
   fromDate: string;
   toDate: string;
 }) {
-  return apiRequest<FinancialReport>(REPORT_ENDPOINTS.financial, {
-    params,
-    useAuth: true,
-  });
+  return apiRequest<FinancialReport>(
+    REPORT_ENDPOINTS.financial,
+    { params },
+    { useAuth: true },
+  );
 }
 
 export async function fetchFinancialReportCsv(params: {

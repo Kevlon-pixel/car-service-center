@@ -11,13 +11,16 @@ export interface ServiceItem {
 }
 
 export async function fetchServices(search?: string, includeInactive?: boolean) {
-  return apiRequest<ServiceItem[]>(SERVICE_ENDPOINTS.all, {
-    params: {
-      ...(search ? { search } : {}),
-      ...(includeInactive ? { includeInactive: true } : {}),
+  return apiRequest<ServiceItem[]>(
+    SERVICE_ENDPOINTS.all,
+    {
+      params: {
+        ...(search ? { search } : {}),
+        ...(includeInactive ? { includeInactive: true } : {}),
+      },
     },
-    useAuth: !!includeInactive ? true : false,
-  });
+    { useAuth: Boolean(includeInactive) },
+  );
 }
 
 export interface ServiceInput {

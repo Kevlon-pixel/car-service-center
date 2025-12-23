@@ -12,13 +12,16 @@ export interface SparePartItem {
 }
 
 export async function fetchSpareParts(search?: string, includeInactive?: boolean) {
-  return apiRequest<SparePartItem[]>(SPARE_PART_ENDPOINTS.all, {
-    params: {
-      ...(search ? { search } : {}),
-      ...(includeInactive ? { includeInactive: true } : {}),
+  return apiRequest<SparePartItem[]>(
+    SPARE_PART_ENDPOINTS.all,
+    {
+      params: {
+        ...(search ? { search } : {}),
+        ...(includeInactive ? { includeInactive: true } : {}),
+      },
     },
-    useAuth: !!includeInactive ? true : false,
-  });
+    { useAuth: Boolean(includeInactive) },
+  );
 }
 
 export interface SparePartInput {
