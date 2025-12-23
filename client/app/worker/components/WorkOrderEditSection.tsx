@@ -69,6 +69,18 @@ export function WorkOrderEditSection({
   const [actionError, setActionError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  const currentUserSummary: UserSummary = {
+    id: profile.id,
+    name: profile.name,
+    surname: profile.surname,
+    email: profile.email,
+    phone: profile.phone,
+    role: profile.role as UserSummary["role"],
+    isEmailVerified: profile.isEmailVerified,
+    createdAt: profile.createdAt,
+    updatedAt: profile.updatedAt,
+  };
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
@@ -89,30 +101,14 @@ export function WorkOrderEditSection({
         );
         const withSelf = [
           ...workerUsers,
-          {
-            id: profile.id,
-            name: profile.name,
-            surname: profile.surname,
-            email: profile.email,
-            phone: profile.phone,
-            role: profile.role as UserSummary["role"],
-          },
+          currentUserSummary,
         ];
         const deduped = Array.from(
           new Map(withSelf.map((u) => [u.id, u])).values(),
         );
         setWorkers(deduped);
       } catch {
-        setWorkers([
-          {
-            id: profile.id,
-            name: profile.name,
-            surname: profile.surname,
-            email: profile.email,
-            phone: profile.phone,
-            role: profile.role as UserSummary["role"],
-          },
-        ]);
+        setWorkers([currentUserSummary]);
       }
     } catch (err) {
       setError(
