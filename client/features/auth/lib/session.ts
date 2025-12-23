@@ -65,16 +65,10 @@ export async function apiRequest<T>(
   options: AuthRequestOptions = {},
 ): Promise<T> {
   const { useAuth = true } = options;
-  const baseHeaders = config.headers;
-  const headers: Record<string, string> =
-    baseHeaders instanceof Headers
-      ? Object.fromEntries(baseHeaders.entries())
-      : Array.isArray(baseHeaders)
-        ? Object.fromEntries(baseHeaders)
-        : { ...(baseHeaders ?? {}) };
+  const headers = new Headers(config.headers ?? undefined);
 
   if (useAuth && tokenStorage.get()) {
-    headers.Authorization = `Bearer ${tokenStorage.get()}`;
+    headers.set('Authorization', `Bearer ${tokenStorage.get()}`);
   }
 
   try {
@@ -85,9 +79,11 @@ export async function apiRequest<T>(
       if (!newToken) {
         throw error;
       }
+      const retryHeaders = new Headers(headers);
+      retryHeaders.set('Authorization', `Bearer ${newToken}`);
       return httpClient<T>(path, {
         ...config,
-        headers: { ...headers, Authorization: `Bearer ${newToken}` },
+        headers: retryHeaders,
       });
     }
     throw error;
