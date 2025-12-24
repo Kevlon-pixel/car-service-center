@@ -37,7 +37,7 @@ export class AuthController {
       await this.authService.verifyEmail(dto.emailToken);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      sameSite: 'Strict',
+      sameSite: isDev(this.config) ? 'Lax' : 'None',
       secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
@@ -52,7 +52,7 @@ export class AuthController {
       await this.authService.login(dto);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      sameSite: 'Strict',
+      sameSite: isDev(this.config) ? 'Lax' : 'None',
       secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
@@ -67,7 +67,7 @@ export class AuthController {
   async logout(@Res({ passthrough: true }) res) {
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      sameSite: 'Strict',
+      sameSite: isDev(this.config) ? 'Lax' : 'None',
       secure: !isDev(this.config),
       path: '/',
     });
@@ -89,7 +89,7 @@ export class AuthController {
       await this.authService.refresh(oldToken);
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      sameSite: 'Strict',
+      sameSite: isDev(this.config) ? 'Lax' : 'None',
       secure: !isDev(this.config),
       path: '/',
       maxAge: expiresAt.getTime() - Date.now(),
